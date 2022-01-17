@@ -228,10 +228,9 @@ class AUC(object):
         self.reals = []
         self.preds = []
 
-    def addEdges(self, masked_adj, h_nodes_all, orig_adj, dataset=None):
+    def addEdges2(self, masked_adj, h_edges, h_nodes_all=None, dataset=None):
 
         if dataset == 'synthetic':
-            h_edges = {}
             h_edges = {}
             h_nodes = h_nodes_all[:4]
             for i_n in range(len(h_nodes)):
