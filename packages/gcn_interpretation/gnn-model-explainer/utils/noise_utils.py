@@ -29,7 +29,7 @@ class NoiseHandler(object):
         self.pred_change = AverageMeter()
         self.prob_change = AverageMeter()
 
-        self.topk = [4]
+        self.topk = [8] # TODO: belangrijk!
         self.node_topk = [1, 2, 4, 8]
     
         # AUC mode
@@ -88,9 +88,10 @@ class NoiseHandler(object):
 
         return new_feat, new_adj, noise_label
 
-    def update(self, masked_adj, masked_adj_noise, orig_adj, orig_adj_noise, imp_nodes, graph_idx, noise_label):
-        if self.mode == 'auc':   
-            self.update_auc(masked_adj, masked_adj_noise, orig_adj, orig_adj_noise, imp_nodes, graph_idx, noise_label)
+    def update(self, masked_adj, masked_adj_noise, orig_adj, orig_adj_noise,
+               imp_nodes, graph_idx, noise_label, x=None, sub_nodes=None):
+        if self.mode == 'auc':
+            self.update_auc(masked_adj, masked_adj_noise, orig_adj, orig_adj_noise, imp_nodes, graph_idx, noise_label, x=x, sub_nodes=sub_nodes)
         elif self.mode == 'acc':
             self.update_acc(masked_adj, masked_adj_noise, orig_adj, orig_adj_noise, imp_nodes, graph_idx, noise_label)
 
@@ -164,7 +165,8 @@ class NoiseHandler(object):
         self.node_accuracy.update(node_accs)
 
     # noise as AUC
-    def update_auc(self, masked_adj, masked_adj_noise, orig_adj, orig_adj_noise, imp_nodes, graph_idx, noise_label):
+    def update_auc(self, masked_adj, masked_adj_noise, orig_adj,
+                   orig_adj_noise, imp_nodes, graph_idx, noise_label, x=None, sub_nodes=None):
         noise_diff = compare_adjs(masked_adj, masked_adj_noise, orig_adj, orig_adj_noise)
         
         gt = masked_adj
@@ -190,7 +192,7 @@ class NoiseHandler(object):
         self.nDCG.update(accuracy_utils.getNDCGAdj(masked_adj, masked_adj_noise))
 
         self.noise_diff.update(noise_diff)
-        self.stats.update(masked_adj_noise, imp_nodes, graph_idx)
+        # self.stats.update(masked_adj_noise, imp_nodes, torch.tensor(orig_adj_noise), x,noise_label,sub_nodes)
         self.update_count[noise_label] += 1
 
     def __str__(self):
@@ -203,7 +205,7 @@ class NoiseHandler(object):
 
         if self.mode == 'auc':
             retval += "Average mAP: {}\n".format(self.mAP.avg)
-            retval += "AUC: {}\n".format(self.AUC.getAUC())
+            retval += "ROC AUC: {}\n".format(self.AUC.getAUC())
             retval += "AUC_ind: {}\n".format(self.AUC_ind.avg)
             retval += "nDCG: {}\n".format(self.nDCG.avg)
         elif self.mode == 'acc':

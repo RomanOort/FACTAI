@@ -1119,7 +1119,6 @@ class ExplainerRCExplainer(explain.Explainer):
                     #         ht_edges[k] = 1.0
 
                     # AUC.clearAUC()
-
                     AUC.addEdges2(masked_adj, ht_edges)
 
                     # mean_auc += AUC.getAUC()
@@ -1217,15 +1216,13 @@ class ExplainerRCExplainer(explain.Explainer):
                     for n_iter in range(noise_iters):
                         for nh in noise_handlers:
                             try:
-                                noise_feat, noise_adj = nh.sample(sub_feat[0], sub_adj[0], sub_nodes)
-                            except: 
+                                noise_feat, noise_adj, noise_label = nh.sample(sub_feat[0], sub_adj[0], sub_nodes)
+                            except:
                                 continue
-
                             emb_noise = self.model.getEmbeddings(noise_feat.unsqueeze(0), noise_adj.unsqueeze(0), [sub_nodes.cpu().numpy()])
                             pred_n, masked_adj_n, _, _, _ = explainer((noise_feat, emb_noise[0], noise_adj, tmp, label, sub_nodes), training=False)
                             masked_adj_n = masked_adj_n.cpu().detach() * noise_adj
-
-                            nh.update(masked_adj, masked_adj_n.cpu().detach().numpy(), sub_adj[0], noise_adj.cpu().detach().numpy(), None, graph_idx)
+                            nh.update(masked_adj, masked_adj_n.cpu().detach().numpy(), sub_adj[0], noise_adj.cpu().detach().numpy(), None, graph_idx, noise_label, x, sub_nodes)
         if not args.noise:
             global_noise_count = 1.0
             noise_diff_count = 1.0
@@ -1290,7 +1287,6 @@ class ExplainerRCExplainer(explain.Explainer):
                 "ROC AUC score: {}".format(AUC.getAUC())
             )
             myfile.write("\n ROC AUC score: {}".format(AUC.getAUC()))
-
         total[total < 0.5] = 1.0
 
         print(
@@ -1392,6 +1388,7 @@ class ExplainerRCExplainer(explain.Explainer):
         print(stats.summary())
         myfile.close()
 
+        # TODO: romana: return de stats
 
 
 

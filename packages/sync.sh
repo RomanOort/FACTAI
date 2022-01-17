@@ -1,1 +1,1 @@
-rsync * tvorden@ws3:/storage2/tvorden/FACT/packages -avzP
+rsync * tvorden@WS3:/storage2/tvorden/FACT/packages -avzP
