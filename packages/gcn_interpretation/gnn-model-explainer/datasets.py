@@ -7,7 +7,7 @@ from torch.utils.data import random_split, Subset
 from torch_geometric.utils import to_dense_adj
 from torch_geometric.utils import dense_to_sparse
 from torch_geometric.data import Data, InMemoryDataset, DataLoader
-from torch_geometric.datasets import MoleculeNet, TUDataset
+from torch_geometric.datasets import MoleculeNet, TUDataset, GNNBenchmarkDataset
 import os.path as osp 
 import glob
 import pickle
@@ -49,6 +49,8 @@ def get_dataset(dataset_dir, dataset_name, **kwargs):
             T.NormalizeFeatures()
         ])
         dataset = PPI(root=dataset_dir, split='train', pre_transform=transform)
+    elif dataset_name == "MNIST":
+        dataset = GNNBenchmarkDataset(root=dataset_dir, name="MNIST")
     else:
         raise NotImplementedError
 

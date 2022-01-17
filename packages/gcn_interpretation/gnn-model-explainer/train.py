@@ -343,7 +343,7 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
             if loss_count > 200:
                 model.zero_grad()
                 loss_ep.backward()
-                nn.utils.clip_grad_norm(model.parameters(), args.clip)
+                nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                 optimizer.step()
                 loss_ep = 0.
                 loss_count = 0.
@@ -870,7 +870,7 @@ def train_synthetic(
 
             if not args.cg:
                 loss.backward()
-                nn.utils.clip_grad_norm(model.parameters(), args.clip)
+                nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                 optimizer.step()
             else:
                 if batch_idx > save_batches:
@@ -1021,7 +1021,7 @@ def train_genome(
             else:
                 loss = model.loss(ypred, label, adj, batch_num_nodes)
             loss.backward()
-            nn.utils.clip_grad_norm(model.parameters(), args.clip)
+            nn.utils.clip_grad_norm_(model.parameters(), args.clip)
             optimizer.step()
             iter += 1
             avg_loss += loss
@@ -1186,7 +1186,7 @@ def train(
                 loss = model.loss(ypred, label, adj, batch_num_nodes)
             if not args.cg:
                 loss.backward()
-                nn.utils.clip_grad_norm(model.parameters(), args.clip)
+                nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                 optimizer.step()
             else:
                 if batch_idx > save_batches:
@@ -1313,7 +1313,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
         else:
             loss = model.loss(ypred_train, labels_train)
         loss.backward()
-        nn.utils.clip_grad_norm(model.parameters(), args.clip)
+        nn.utils.clip_grad_norm_(model.parameters(), args.clip)
 
         optimizer.step()
         #for param_group in optimizer.param_groups:
@@ -1539,7 +1539,7 @@ def train_node_classifier_multigraph(G_list, labels, model, args, writer=None):
         else:
             loss = model.loss(ypred_train_cmp, labels_train)
         loss.backward()
-        nn.utils.clip_grad_norm(model.parameters(), args.clip)
+        nn.utils.clip_grad_norm_(model.parameters(), args.clip)
 
         optimizer.step()
         #for param_group in optimizer.param_groups:
@@ -2415,7 +2415,7 @@ def pyg_task(args, writer=None, feat="node-label"):
         model.load_state_dict(ckpt_dict['model_state'])
         extract_cg_pyg(args, model, device, train_loader, val_loader)
         return
-    train_pyg(args, model, device, train_loader, val_loader, test_loader, batch_size=args.batch_size)
+    train_pyg(args, model, device, train_loader, val_loader, test_loader)#, batch_size=args.batch_size)
 
 def benchmark_task_val(args, writer=None, feat="node-label"):
     all_vals = []
