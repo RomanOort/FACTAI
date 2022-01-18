@@ -1038,7 +1038,8 @@ class ExplainerRCExplainer(explain.Explainer):
 
                 adj = torch.tensor(sub_adj, dtype=torch.float)
                 x = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-                label = torch.tensor(sub_label, dtype=torch.long)
+                label = sub_label.clone().detach()
+                # label = torch.tensor(sub_label, dtype=torch.long)
 
                 # if self.emb is not None:
                 #     sub_emb = self.emb[graph_idx, :]
@@ -2383,7 +2384,8 @@ class ExplainerRCExplainer(explain.Explainer):
         if test_graph_indices is not None:
             print("EVALUATING")
             self.eval_graphs_2(args, test_graph_indices, explainer)
-        return masked_adjs
+
+        return [], [], [], []
 
 class ExplainModule(nn.Module):
     def __init__(

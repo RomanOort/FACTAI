@@ -113,7 +113,7 @@ if __name__ == "__main__":
     fidelity_res = load_data(results_dir + fidelity_path)
     roc_auc_res = load_data(results_dir + roc_path)
 
-    for seed in SEEDS[:2]:
+    for seed in SEEDS[:-2]:
         print("Evaluating seed", seed)
         if str(seed) in fidelity_res and str(seed) in roc_auc_res:
             continue
