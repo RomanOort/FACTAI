@@ -12,6 +12,7 @@ import time
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import wandb
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import copy
@@ -40,20 +41,16 @@ import models
 import pandas as pd
 import datasets
 
-
 from torch_geometric.utils import to_dense_adj
 
 only_save_cg = False
 
-
-
-
-
 '''
 Use with deterministic dataloader generator, or results won't be replicable
 '''
-def extract_cg_pyg(args, model, device, train_loader, val_loader):
 
+
+def extract_cg_pyg(args, model, device, train_loader, val_loader):
     print("Loading ckpt .....")
     ckpt_dict = io_utils.load_ckpt(args)
     model.load_state_dict(ckpt_dict['model_state'])
@@ -82,25 +79,24 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         num_nodes = min(len(data.x), adj.shape[1])
         label = data.y
         if args.bmname == 'tox21':
-            label = label[:,0]
-
+            label = label[:, 0]
 
         adj = Variable(adj, requires_grad=False).float().to(device)
         h0 = Variable(feats, requires_grad=False).float().to(device)
         label = Variable(label.long(), requires_grad=False).to(device)
         batch_num_nodes = [num_nodes]
         label = label.reshape((-1))
-     
+
         if len(h0.shape) == 2:
-            h0 = h0.unsqueeze(0) 
+            h0 = h0.unsqueeze(0)
         if h0.shape[1] > num_nodes:
-            h0 = h0[:,:num_nodes,:]
+            h0 = h0[:, :num_nodes, :]
 
         try:
-            if label.item() !=0 and label.item() != 1:
+            if label.item() != 0 and label.item() != 1:
                 print(label)
                 w_lbl += 1
-                #continue
+                # continue
         except:
             x = 0
         all_feats[batch_idx] = h0.cpu().numpy()
@@ -113,11 +109,11 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         #     all_adjs = adj
         #     all_num_nodes = torch.tensor(num_nodes)
         # else:  
-            # all_feats = torch.cat((all_feats, feats), dim=0)
-            # all_labels = torch.cat((all_labels, label), dim=0)
-            # all_adjs = torch.cat((all_adjs, adj), dim=0)
-            # all_num_nodes = torch.cat((all_num_nodes, num_nodes), dim=0)
- 
+        # all_feats = torch.cat((all_feats, feats), dim=0)
+        # all_labels = torch.cat((all_labels, label), dim=0)
+        # all_adjs = torch.cat((all_adjs, adj), dim=0)
+        # all_num_nodes = torch.cat((all_num_nodes, num_nodes), dim=0)
+
         ypred, att_adj = model(h0, adj, batch_num_nodes)
         all_preds[batch_idx] = ypred.cpu().detach().numpy()
 
@@ -131,7 +127,6 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     val_num_nodes = {}
     for batch_idx, data in enumerate(val_loader):
 
-
         feats = data.x
         if (data.edge_index.shape[1] == 0):
             continue
@@ -139,18 +134,18 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         num_nodes = min(len(data.x), adj.shape[1])
         label = data.y
         if args.bmname == 'tox21':
-            label = label[:,0]
-            
+            label = label[:, 0]
+
         adj = Variable(adj, requires_grad=False).float().to(device)
         h0 = Variable(feats, requires_grad=False).float().to(device)
         label = Variable(label.long(), requires_grad=False).to(device)
         batch_num_nodes = [num_nodes]
         label = label.reshape((-1))
-     
+
         if len(h0.shape) == 2:
-            h0 = h0.unsqueeze(0) 
+            h0 = h0.unsqueeze(0)
         if h0.shape[1] > num_nodes:
-            h0 = h0[:,:num_nodes,:]
+            h0 = h0[:, :num_nodes, :]
 
         val_feats[batch_idx] = h0.cpu().numpy()
         val_labels[batch_idx] = label.cpu().numpy()
@@ -172,17 +167,15 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         ypred, att_adj = model(h0, adj, batch_num_nodes)
         val_preds[batch_idx] = ypred.cpu().detach().numpy()
         val_acc += torch.argmax(ypred) == label
-    
+
     max_feat = 0
     feat_dim = all_feats[0].shape[-1]
     for k, v in all_adjs.items():
         max_feat = max_feat if max_feat >= v.shape[1] else v.shape[1]
- 
+
     for k, v in val_adjs.items():
         max_feat = max_feat if max_feat >= v.shape[1] else v.shape[1]
- 
 
-   
     all_adjs_v = None
     all_feats_v = None
     all_labels_v = None
@@ -202,7 +195,6 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         num_nodes = all_num_nodes[k]
         num_nodes = np.expand_dims(num_nodes, 0)
 
-
         adj = torch.tensor(adj)
         feat = torch.tensor(feat)
         label = torch.tensor(label)
@@ -220,7 +212,7 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
             all_feats_v = torch.cat((all_feats_v, feat))
             all_labels_v = torch.cat((all_labels_v, label))
             all_preds_v.append(pred.tolist())
-            all_num_nodes_v = torch.cat((all_num_nodes_v, num_nodes))     
+            all_num_nodes_v = torch.cat((all_num_nodes_v, num_nodes))
 
     val_adjs_v = None
     val_feats_v = None
@@ -241,7 +233,6 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         num_nodes = val_num_nodes[k]
         num_nodes = np.expand_dims(num_nodes, 0)
 
-
         adj = torch.tensor(adj)
         feat = torch.tensor(feat)
         label = torch.tensor(label)
@@ -259,11 +250,12 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
             val_feats_v = torch.cat((val_feats_v, feat))
             val_labels_v = torch.cat((val_labels_v, label))
             val_preds_v.append(pred.tolist())
-            val_num_nodes_v = torch.cat((val_num_nodes_v, num_nodes))    
+            val_num_nodes_v = torch.cat((val_num_nodes_v, num_nodes))
     all_labels_v = all_labels_v.squeeze(1)
     val_labels_v = val_labels_v.squeeze(1)
 
-    print(all_adjs_v.shape, all_feats_v.shape, all_labels_v.shape, all_num_nodes_v.shape, val_labels_v.shape, all_num_nodes_v[:5])
+    print(all_adjs_v.shape, all_feats_v.shape, all_labels_v.shape, all_num_nodes_v.shape, val_labels_v.shape,
+          all_num_nodes_v[:5])
     cg_data = {
         "adj": all_adjs_v,
         "feat": all_feats_v,
@@ -277,10 +269,10 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         "val_num_nodes": val_num_nodes_v,
         "train_idx": len(train_loader)
     }
+    print(cg_data)
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
-    
-    print("ckpt saved")
 
+    print("ckpt saved")
 
 
 #############################
@@ -289,11 +281,12 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
 #
 #############################
 
-def train_pyg(args, model, device, train_loader, val_loader, test_loader):
-
+def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer):
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()), lr=0.001
     )
+
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100, 200], gamma=0.1)
 
     print("epochs : ", args.num_epochs)
     for epoch in range(args.num_epochs):
@@ -314,7 +307,7 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
             num_nodes = min(len(data.x), adj.shape[1])
             label = data.y
             if args.bmname == 'tox21':
-                label = label[:,0]
+                label = label[:, 0]
 
             adj = Variable(adj, requires_grad=False).float().to(device)
             h0 = Variable(feats, requires_grad=False).float().to(device)
@@ -323,11 +316,10 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
             label = label.reshape((-1))
 
             if len(h0.shape) == 2:
-                h0 = h0.unsqueeze(0) 
+                h0 = h0.unsqueeze(0)
             if h0.shape[1] > num_nodes:
                 wrong_samples += 1
-                h0 = h0[:,:num_nodes,:]
-
+                h0 = h0[:, :num_nodes, :]
 
             ypred, att_adj = model(h0, adj, batch_num_nodes)
 
@@ -348,21 +340,19 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
                 loss_ep = 0.
                 loss_count = 0.
 
-            #model.zero_grad()
-            #loss.backward()
-            #nn.utils.clip_grad_norm(model.parameters(), args.clip)
-            #optimizer.step() 
+            # model.zero_grad()
+            # loss.backward()
+            # nn.utils.clip_grad_norm(model.parameters(), args.clip)
+            # optimizer.step()
 
-
-        
-        if epoch%100 == 0 and epoch > 0:
+        if epoch % 100 == 0 and epoch > 0:
             print("ckpt saved for epoch: ", epoch)
             cg_data = {}
             io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
         model.eval()
         for batch_idx, data in enumerate(val_loader):
-            
+
             feats = data.x
             if (data.edge_index.shape[1] == 0):
                 continue
@@ -371,29 +361,38 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
             num_nodes = min(len(data.x), adj.shape[1])
             label = data.y
             if args.bmname == 'tox21':
-                label = label[:,0]
-
+                label = label[:, 0]
 
             adj = Variable(adj, requires_grad=False).float().to(device)
             h0 = Variable(feats, requires_grad=False).float().to(device)
             label = Variable(label.long(), requires_grad=False).to(device)
             batch_num_nodes = [num_nodes]
             label = label.reshape((-1))
-            
- 
-            if len(h0.shape) == 2:
-                h0 = h0.unsqueeze(0) 
-            if h0.shape[1] > num_nodes:
-                h0 = h0[:,:num_nodes,:]
 
+            if len(h0.shape) == 2:
+                h0 = h0.unsqueeze(0)
+            if h0.shape[1] > num_nodes:
+                h0 = h0[:, :num_nodes, :]
 
             ypred, att_adj = model(h0, adj, batch_num_nodes)
 
             val_acc += torch.argmax(ypred) == label
+        tacc = train_acc.item() / len(train_loader)
+        vacc = val_acc.item() / len(val_loader)
+        print("Epoch: {}\tTrain accuracy: {}\tValid accuracy: {}".format(epoch, tacc, vacc))
 
-        print("Epoch: {}\tTrain accuracy: {}\tValid accuracy: {}".format(epoch, train_acc.item() / len(train_loader), val_acc.item() / len(val_loader)))
+        lr = [group['lr'] for group in optimizer.param_groups][0]
 
-    print("wrong samples: ",wrong_samples, len(train_loader))
+        writer.log({
+            "epoch": epoch,
+            "train_acc": tacc,
+            "val_acc": vacc,
+            "lr": lr,
+        })
+
+        scheduler.step()
+
+    print("wrong samples: ", wrong_samples, len(train_loader))
     test_acc = 0
     model.eval()
     for batch_idx, data in enumerate(test_loader):
@@ -403,94 +402,95 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
         num_nodes = min(len(data.x), adj.shape[1])
         label = data.y
         if args.bmname == 'tox21':
-            label = label[:,0]
-
+            label = label[:, 0]
 
         adj = Variable(adj, requires_grad=False).float().to(device)
         h0 = Variable(feats, requires_grad=False).float().to(device)
         label = Variable(label.long(), requires_grad=False).to(device)
         batch_num_nodes = [num_nodes]
         label = label.reshape((-1))
-             
-        if len(h0.shape) == 2:
-            h0 = h0.unsqueeze(0) 
-        if h0.shape[1] > num_nodes:
-            h0 = h0[:,:num_nodes,:] 
 
-       
+        if len(h0.shape) == 2:
+            h0 = h0.unsqueeze(0)
+        if h0.shape[1] > num_nodes:
+            h0 = h0[:, :num_nodes, :]
+
         ypred, att_adj = model(h0, adj, batch_num_nodes)
 
         test_acc += torch.argmax(ypred) == label
-    
-    print("Test accuracy: {}".format(test_acc.item() / len(test_loader)))
+
+    tacc = test_acc.item() / len(test_loader)
+    print("Test accuracy: {}".format(tacc))
+    writer.log({
+        "test_acc": tacc,
+    })
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
 
-
-def pyg_task(args, writer=None, feat="node-label"):
-    dataset_name = args.bmname
-    path = args.datadir
-    #path = "/home/mohit/Mohit/gcn_interpretation/data/Graph-SST2"
-    #path = "/home/mohit/Mohit/gcn_interpretation/data"
-    #path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'datasets')
-    dataset = datasets.get_dataset(dataset_dir=path, dataset_name=dataset_name)
-    dataset.process()
-    if args.cg:
-        args.batch_size = 1
-        batch_size = 1
-    else:
-        args.batch_size = 1
-        batch_size = 1
-    dataloaders = datasets.get_dataloader(dataset, batch_size=args.batch_size, split_ratio=[0.7, 0.2], random_split_flag=True)
-    train_loader = dataloaders['train']
-    val_loader = dataloaders['val']
-    test_loader = dataloaders['test']
-
-    input_dim = next(iter(test_loader)).x.shape[-1]
-    device = torch.device('cuda' if torch.cuda.is_available() and args.gpu else 'cpu')
-
-    if args.method == "soft-assign":
-        print("Method: soft-assign")
-        model = models.SoftPoolingGcnEncoder(
-            max_num_nodes,
-            input_dim,
-            args.hidden_dim,
-            args.output_dim,
-            args.num_classes,
-            args.num_gc_layers,
-            args.hidden_dim,
-            assign_ratio=args.assign_ratio,
-            num_pooling=args.num_pool,
-            bn=args.bn,
-            dropout=args.dropout,
-            linkpred=args.linkpred,
-            args=args,
-            assign_input_dim=assign_input_dim,
-        ).to(device)
-    else:
-        print("Method: base")
-        print("embed:", args.add_embedding)
-        model = models.GcnEncoderGraph(
-            input_dim,
-            args.hidden_dim,
-            args.output_dim,
-            args.num_classes,
-            args.num_gc_layers,
-            pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
-            device=device,
-            bn=args.bn,
-            dropout=args.dropout,
-            args=args,
-        ).to(device)
-    if args.cg:
-        #print("Loading ckpt .....")
-        #ckpt_dict = io_utils.load_ckpt(args)
-        #model.load_state_dict(ckpt_dict['model_state'])
-        extract_cg_pyg(args, model, device, train_loader, val_loader)
-        return
-    train_pyg(args, model, device, train_loader, val_loader, test_loader)
-
+# def pyg_task(args, writer=None, feat="node-label"):
+#     dataset_name = args.bmname
+#     path = args.datadir
+#     # path = "/home/mohit/Mohit/gcn_interpretation/data/Graph-SST2"
+#     # path = "/home/mohit/Mohit/gcn_interpretation/data"
+#     # path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'datasets')
+#     dataset = datasets.get_dataset(dataset_dir=path, dataset_name=dataset_name)
+#     dataset.process()
+#     if args.cg:
+#         args.batch_size = 1
+#         batch_size = 1
+#     else:
+#         args.batch_size = 1
+#         batch_size = 1
+#     dataloaders = datasets.get_dataloader(dataset, batch_size=args.batch_size, split_ratio=[0.7, 0.2],
+#                                           random_split_flag=True)
+#     train_loader = dataloaders['train']
+#     val_loader = dataloaders['val']
+#     test_loader = dataloaders['test']
+#
+#     input_dim = next(iter(test_loader)).x.shape[-1]
+#     device = torch.device('cuda' if torch.cuda.is_available() and args.gpu else 'cpu')
+#
+#     if args.method == "soft-assign":
+#         print("Method: soft-assign")
+#         model = models.SoftPoolingGcnEncoder(
+#             max_num_nodes,
+#             input_dim,
+#             args.hidden_dim,
+#             args.output_dim,
+#             args.num_classes,
+#             args.num_gc_layers,
+#             args.hidden_dim,
+#             assign_ratio=args.assign_ratio,
+#             num_pooling=args.num_pool,
+#             bn=args.bn,
+#             dropout=args.dropout,
+#             linkpred=args.linkpred,
+#             args=args,
+#             assign_input_dim=assign_input_dim,
+#         ).to(device)
+#     else:
+#         print("Method: base")
+#         print("embed:", args.add_embedding)
+#         model = models.GcnEncoderGraph(
+#             input_dim,
+#             args.hidden_dim,
+#             args.output_dim,
+#             args.num_classes,
+#             args.num_gc_layers,
+#             pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
+#             device=device,
+#             bn=args.bn,
+#             dropout=args.dropout,
+#             args=args,
+#         ).to(device)
+#     if args.cg:
+#         # print("Loading ckpt .....")
+#         # ckpt_dict = io_utils.load_ckpt(args)
+#         # model.load_state_dict(ckpt_dict['model_state'])
+#         extract_cg_pyg(args, model, device, train_loader, val_loader)
+#         return
+#     train_pyg(args, model, device, train_loader, val_loader, test_loader, writer)
 
 
 #############################
@@ -499,22 +499,25 @@ def pyg_task(args, writer=None, feat="node-label"):
 #
 #############################
 def prepare_synthetic_data(args):
-
     if args.bmname == 'old_synthetic':
-        #data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_2label_3sublabel/synthetic_data.p","rb"))
+        # data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_2label_3sublabel/synthetic_data.p","rb"))
 
-        data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20_nofake.p","rb"))
-        #data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20.p","rb"))
+        data = pickle.load(open(
+            "/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20_nofake.p",
+            "rb"))
+        # data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20.p","rb"))
         train_idx = 7000
         val_idx = 7500
-    # # # indices = np.random.permutation(4000)
+        # # # indices = np.random.permutation(4000)
         indices = np.array(list(range(8000)))
 
 
 
-    #data = pickle.load(open("../data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20.p","rb")) #good
+    # data = pickle.load(open("../data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20.p","rb")) #good
     else:
-        data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20_12dlbls_nofake.p","rb"))
+        data = pickle.load(open(
+            "/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_3label_3sublabel/synthetic_data_8000_comb_norep_max20_12dlbls_nofake.p",
+            "rb"))
         train_idx = 7000
         val_idx = 7500
         indices = np.array(list(range(8000)))
@@ -533,15 +536,11 @@ def prepare_synthetic_data(args):
     y_val_label = torch.from_numpy(data['label'][indices[train_idx:val_idx]])
     # y_val_label = torch.from_numpy(data['sub_label'][indices[train_idx:val_idx]]) + 1
 
-
-
     X_test_feat = torch.from_numpy(data['feat'][indices[val_idx:]]).float()
     X_test_adj = torch.from_numpy(data['adj'][indices[val_idx:]]).float()
     X_test_nodes = torch.from_numpy(data['num_nodes'][indices[val_idx:]])
     y_test_label = torch.from_numpy(data['label'][indices[val_idx:]])
     # y_test_label = torch.from_numpy(data['sub_label'][indices[val_idx:]]) + 1
-
-
 
     print("debug: ", X_train_feat.shape, X_train_adj.shape, X_train_nodes.shape, y_train_label.shape)
     train_dataset = torch.utils.data.TensorDataset(X_train_feat, X_train_adj, X_train_nodes, y_train_label)
@@ -579,15 +578,13 @@ def prepare_synthetic_data(args):
         train_dataset_loader,
         val_dataset_loader,
         test_dataset_loader,
-        X_train_feat.shape[1], #max nodes
-        X_train_feat.shape[2],#32, #max feat dim after embedding
-        X_train_feat.shape[2],#32, #assign feat dim?
+        X_train_feat.shape[1],  # max nodes
+        X_train_feat.shape[2],  # 32, #max feat dim after embedding
+        X_train_feat.shape[2],  # 32, #assign feat dim?
     )
 
 
-
-
-def prepare_genome_data(args,max_nodes=0):
+def prepare_genome_data(args, max_nodes=0):
     df = pd.read_csv('../data/gcn_data/SC980可解释性数据/code/gene_data_filter_980_x_train.csv', index_col=0)
     lab = pd.read_csv('../data/gcn_data/SC980可解释性数据/code/gene_data_filter_980_y_train.csv', index_col=0)
     X_all = torch.from_numpy(df.values)
@@ -597,7 +594,6 @@ def prepare_genome_data(args,max_nodes=0):
     indices = torch.randperm(X_all.shape[0])
     X_all = X_all[indices, :]
     y_all = y_all[indices]
-
 
     train_idx = int(X_all.shape[0] * args.train_ratio)
     test_idx = int(X_all.shape[0] * (1 - args.test_ratio))
@@ -611,8 +607,6 @@ def prepare_genome_data(args,max_nodes=0):
     train_dataset = torch.utils.data.TensorDataset(X_train, y_train)
     val_dataset = torch.utils.data.TensorDataset(X_val, y_val)
     test_dataset = torch.utils.data.TensorDataset(X_test, y_test)
-
-
 
     train_dataset_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -638,11 +632,10 @@ def prepare_genome_data(args,max_nodes=0):
         train_dataset_loader,
         val_dataset_loader,
         test_dataset_loader,
-        5129, #max nodes
-        1,#32, #max feat dim after embedding
-        1,#32, #assign feat dim?
+        5129,  # max nodes
+        1,  # 32, #max feat dim after embedding
+        1,  # 32, #assign feat dim?
     )
-
 
 
 def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
@@ -656,7 +649,7 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
         random.shuffle(c)
         graphs, adjs_v, adjs_2 = zip(*c)
     # else:
-    #if not only_save_cg:
+    # if not only_save_cg:
     random.shuffle(graphs)
 
     # print(len(graphs), len(adjs_v), len(adjs_2))
@@ -716,7 +709,7 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
         normalize=False,
         max_num_nodes=max_nodes,
         features=args.feature_type,
-        adjs_v= train_adjs_v,
+        adjs_v=train_adjs_v,
         adjs_2=train_adjs_2
 
     )
@@ -733,11 +726,11 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
     )
 
     dataset_sampler = graph_utils.GraphSampler(
-        val_graphs, 
-        normalize=False, 
-        max_num_nodes=max_nodes, 
+        val_graphs,
+        normalize=False,
+        max_num_nodes=max_nodes,
         features=args.feature_type,
-        adjs_v = val_adjs_v,
+        adjs_v=val_adjs_v,
         adjs_2=val_adjs_2
 
     )
@@ -780,17 +773,16 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
 #
 #############################
 def train_synthetic(
-    dataset,
-    model,
-    args,
-    device,
-    same_feat=True,
-    val_dataset=None,
-    test_dataset=None,
-    writer=None,
-    mask_nodes=True,
+        dataset,
+        model,
+        args,
+        device,
+        same_feat=True,
+        val_dataset=None,
+        test_dataset=None,
+        writer=None,
+        mask_nodes=True,
 ):
-
     if args.cg:
         print("Loading ckpt .....")
         ckpt_dict = io_utils.load_ckpt(args)
@@ -800,7 +792,7 @@ def train_synthetic(
         torch.no_grad()
     breaking = False
     save_batches = 350
-    #save_batches = 150
+    # save_batches = 150
     # best_model = copy.deepcopy(model.cpu())
 
     writer_batch_idx = [0, 3, 6, 9]
@@ -830,7 +822,7 @@ def train_synthetic(
         print("Epoch: ", epoch)
         for batch_idx, (feats, adj, num_nodes, label) in enumerate(dataset):
             # feats = feats.unsqueeze(2)
-           
+
             model.zero_grad()
             if args.cg:
                 if batch_idx == 0:
@@ -936,7 +928,6 @@ def train_synthetic(
         plt.close()
         matplotlib.style.use("default")
 
-
     # print(all_adjs.shape, all_feats.shape, all_labels.shape)
     if args.cg:
         cg_data = {
@@ -955,15 +946,15 @@ def train_synthetic(
 
 
 def train_genome(
-    adj_np,
-    dataset,
-    model,
-    args,
-    same_feat=True,
-    val_dataset=None,
-    test_dataset=None,
-    writer=None,
-    mask_nodes=True,
+        adj_np,
+        dataset,
+        model,
+        args,
+        same_feat=True,
+        val_dataset=None,
+        test_dataset=None,
+        writer=None,
+        mask_nodes=True,
 ):
     writer_batch_idx = [0, 3, 6, 9]
 
@@ -981,7 +972,6 @@ def train_genome(
     test_epochs = []
     val_accs = []
 
-
     for epoch in range(args.num_epochs):
         begin_time = time.time()
         avg_loss = 0.0
@@ -997,7 +987,7 @@ def train_genome(
                 prev_labels = label
                 all_feats = prev_feats
                 all_labels = prev_labels
-            elif batch_idx < 20:  #only storing 1st 20 batches, (20*20 graphs)why?
+            elif batch_idx < 20:  # only storing 1st 20 batches, (20*20 graphs)why?
                 prev_feats = feats
                 prev_labels = label
                 all_feats = torch.cat((all_feats, prev_feats), dim=0)
@@ -1009,8 +999,6 @@ def train_genome(
             label = Variable(label.long(), requires_grad=False).cuda()
 
             batch_num_nodes = None
-
-
 
             ypred, att_adj = model(h0, adj, batch_num_nodes)
             if batch_idx < 5:
@@ -1089,18 +1077,17 @@ def train_genome(
     return model, val_accs
 
 
-
 def train(
-    dataset,
-    model,
-    args,
-    same_feat=True,
-    val_dataset=None,
-    test_dataset=None,
-    writer=None,
-    mask_nodes=True,
-    train_adjs = None,
-    val_adjs = None
+        dataset,
+        model,
+        args,
+        same_feat=True,
+        val_dataset=None,
+        test_dataset=None,
+        writer=None,
+        mask_nodes=True,
+        train_adjs=None,
+        val_adjs=None
 ):
     if args.cg:
         print("Loading ckpt .....")
@@ -1144,7 +1131,7 @@ def train(
                     all_feats = prev_feats
                     all_labels = prev_labels
                     all_num_nodes = prev_num_nodes
-                elif batch_idx < save_batches:  #only storing 1st 20 batches, (20*20 graphs)why?
+                elif batch_idx < save_batches:  # only storing 1st 20 batches, (20*20 graphs)why?
                     prev_adjs = data["adj"]
                     prev_feats = data["feats"]
                     prev_labels = data["label"]
@@ -1193,7 +1180,6 @@ def train(
                     breaking = True
                     print("Breaking....................")
                     break
-
 
             iter += 1
             avg_loss += loss
@@ -1298,7 +1284,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
     ypred = None
 
     all_embs = []
-    
+
     for epoch in range(args.num_epochs):
         begin_time = time.time()
         model.zero_grad()
@@ -1316,7 +1302,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
         nn.utils.clip_grad_norm_(model.parameters(), args.clip)
 
         optimizer.step()
-        #for param_group in optimizer.param_groups:
+        # for param_group in optimizer.param_groups:
         #    print(param_group["lr"])
         elapsed = time.time() - begin_time
 
@@ -1385,10 +1371,14 @@ def train_node_classifier(G, labels, model, args, writer=None):
     # pdb.set_trace()
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
+
 activation = []
+
+
 def get_activation(name):
     def hook(model, input, output):
         activation.append(output)
+
     return hook
 
 
@@ -1420,8 +1410,8 @@ def evaluate_node_classifier(G, labels, model, args, label_dict=None, writer=Non
         else:
             ypred, adj_att = model(x, adj)
         ypred_train = ypred[:, train_idx, :]
-        
-        #for param_group in optimizer.param_groups:
+
+        # for param_group in optimizer.param_groups:
         #    print(param_group["lr"])
         elapsed = time.time() - begin_time
 
@@ -1436,25 +1426,23 @@ def evaluate_node_classifier(G, labels, model, args, label_dict=None, writer=Non
     tsne = TSNE(n_components=2, verbose=1, perplexity=40)
     acts = pd.DataFrame(activation[0][0][0])
     results = tsne.fit_transform(acts)
-    df = pd.DataFrame(results, columns = ["ax_1", "ax_2"])
+    df = pd.DataFrame(results, columns=["ax_1", "ax_2"])
 
-    if label_dict is not None: 
+    if label_dict is not None:
         label_dict = [label_dict[v] for v in label_dict.keys()]
     else:
         label_dict = [labels[v] for v in G.nodes()]
     df['label'] = label_dict
     # df['label'] = data["labels"][0]
 
-    
     plt.figure(figsize=(16, 10))
     sns.scatterplot(
         x="ax_1", y="ax_2",
-        data = df,
+        data=df,
         hue="label",
         legend="full"
     )
     plt.savefig("test.png")
-
 
     print(result_train["conf_mat"])
     print(result_test["conf_mat"])
@@ -1475,6 +1463,7 @@ def evaluate_node_classifier(G, labels, model, args, label_dict=None, writer=Non
     # import pdb
     # pdb.set_trace()
     # io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
+
 
 def train_node_classifier_multigraph(G_list, labels, model, args, writer=None):
     train_idx_all, test_idx_all = [], []
@@ -1542,7 +1531,7 @@ def train_node_classifier_multigraph(G_list, labels, model, args, writer=None):
         nn.utils.clip_grad_norm_(model.parameters(), args.clip)
 
         optimizer.step()
-        #for param_group in optimizer.param_groups:
+        # for param_group in optimizer.param_groups:
         #    print(param_group["lr"])
         elapsed = time.time() - begin_time
 
@@ -1615,7 +1604,6 @@ def evaluate_synthetic(dataset, model, args, device='cpu', name="Validation", ma
         h0 = Variable(feats.float(), requires_grad=False).to(device)
         labels.append(label.numpy())
 
-
         label = Variable(label.long(), requires_grad=False).to(device)
 
         batch_num_nodes = num_nodes.numpy().tolist()
@@ -1663,7 +1651,6 @@ def evaluate_genome(dataset, model, args, adj_np, name="Validation", max_num_exa
 
         ypred, att_adj = model(h0, adj, batch_num_nodes)
 
-
         _, indices = torch.max(ypred, 1)
         preds.append(indices.cpu().data.numpy())
 
@@ -1682,6 +1669,7 @@ def evaluate_genome(dataset, model, args, adj_np, name="Validation", max_num_exa
     print(name, " accuracy:", result["acc"])
     return result
 
+
 def evaluate(dataset, model, args, name="Validation", max_num_examples=None):
     model.eval()
 
@@ -1697,7 +1685,6 @@ def evaluate(dataset, model, args, name="Validation", max_num_examples=None):
             adj_v = None
             adj_2 = None
 
-
         h0 = Variable(data["feats"].float()).cuda()
         labels.append(data["label"].long().numpy())
         batch_num_nodes = data["num_nodes"].int().numpy()
@@ -1710,7 +1697,6 @@ def evaluate(dataset, model, args, name="Validation", max_num_examples=None):
             ypred, att_adj = model(h0, adj_2, batch_num_nodes, assign_x=assign_input, adj_v=adj_v)
         else:
             ypred, att_adj = model(h0, adj, batch_num_nodes, assign_x=assign_input)
-
 
         _, indices = torch.max(ypred, 1)
         preds.append(indices.cpu().data.numpy())
@@ -1753,7 +1739,6 @@ def evaluate_node(ypred, labels, train_idx, test_idx):
         "conf_mat": metrics.confusion_matrix(labels_test, pred_test),
     }
     return result_train, result_test
-
 
 
 #############################
@@ -1823,7 +1808,7 @@ def syn_task1(args, writer=None):
             args.output_dim,
             num_classes,
             args.num_gc_layers,
-	    device=device,
+            device=device,
             bn=args.bn,
             args=args,
         )
@@ -1878,7 +1863,7 @@ def syn_task3(args, writer=None):
             args.output_dim,
             num_classes,
             args.num_gc_layers,
-            device = device,
+            device=device,
             bn=args.bn,
             args=args,
         )
@@ -1946,6 +1931,7 @@ def syn_task5(args, writer=None):
 
     train_node_classifier(G, labels, model, args, writer=writer)
 
+
 def syn_task6(args, writer=None):
     # data
     G, labels, name = gengraph.gen_syn6(
@@ -1969,12 +1955,11 @@ def syn_task6(args, writer=None):
             args=args,
         )
 
-        
-
         if args.gpu:
             model = model.cuda()
     # model.load_state_dict(torch.load('./ckpt/syn6_base_h20_o20.pth.tar')['model_state'])
     # evaluate_node_classifier(G, labels, model, args, writer=writer)
+
 
 def syn_task7(args, writer=None):
     # data
@@ -1986,7 +1971,6 @@ def syn_task7(args, writer=None):
     num_classes = max(labels) + 1
 
     input_dim = G.nodes[next(iter(G.nodes()))]["feat"].shape[0]
-
 
     if args.method == "attn":
         print("Method: attn")
@@ -2010,6 +1994,7 @@ def syn_task7(args, writer=None):
     # model.load_state_dict(torch.load('./ckpt/syn7_base_h20_o20.pth.tar')['model_state'])
     # evaluate_node_classifier(G, labels, model, args, label_dict, writer=writer)
 
+
 def syn_task8(args, writer=None):
     # data
     G, labels, name = gengraph.gen_syn8()
@@ -2018,7 +2003,6 @@ def syn_task8(args, writer=None):
     num_classes = max(labels) + 1
 
     input_dim = G.nodes[next(iter(G.nodes()))]["feat"].shape[0]
-
 
     if args.method == "attn":
         print("Method: attn")
@@ -2041,7 +2025,6 @@ def syn_task8(args, writer=None):
 
     # model.load_state_dict(torch.load('./ckpt/syn8_base_h20_o20.pth.tar')['model_state'])
     # evaluate_node_classifier(G, labels, model, args, writer=writer)
-
 
 
 def pkl_task(args, feat=None):
@@ -2177,8 +2160,8 @@ def enron_task(args, idx=None, writer=None):
     else:
         print("Running Enron full task")
 
-def synthetic_task(args, writer=None, feat="node-label"):
 
+def synthetic_task(args, writer=None, feat="node-label"):
     train_dataset, val_dataset, test_dataset, max_num_nodes, input_dim, assign_input_dim = prepare_synthetic_data(
         args
     )
@@ -2227,6 +2210,7 @@ def synthetic_task(args, writer=None, feat="node-label"):
         writer=writer,
     )
     evaluate_synthetic(test_dataset, model, args, device, "Validation")
+
 
 def genome_task(args, writer=None, feat="node-label"):
     adj = pickle.load(open("./genome_adj.p", "rb"))
@@ -2278,6 +2262,7 @@ def genome_task(args, writer=None, feat="node-label"):
     )
     evaluate_genome(test_dataset, model, args, "Validation")
 
+
 def benchmark_task(args, writer=None, feat="node-label"):
     graphs = io_utils.read_graphfile(
         args.datadir, args.bmname, max_nodes=args.max_nodes
@@ -2302,7 +2287,7 @@ def benchmark_task(args, writer=None, feat="node-label"):
         for G in graphs:
             featgen_const.gen_node_features(G)
 
-    #all the graphs of data are already processed here as nx graphs
+    # all the graphs of data are already processed here as nx graphs
 
     train_dataset, val_dataset, test_dataset, max_num_nodes, input_dim, assign_input_dim = prepare_data(
         graphs, args, max_nodes=args.max_nodes
@@ -2340,7 +2325,6 @@ def benchmark_task(args, writer=None, feat="node-label"):
             args=args,
         ).cuda()
 
-
     train(
         train_dataset,
         model,
@@ -2350,6 +2334,7 @@ def benchmark_task(args, writer=None, feat="node-label"):
         writer=writer,
     )
     # evaluate(test_dataset, model, args, "Validation")
+
 
 def pyg_task(args, writer=None, feat="node-label"):
     dataset_name = args.bmname
@@ -2415,7 +2400,8 @@ def pyg_task(args, writer=None, feat="node-label"):
         model.load_state_dict(ckpt_dict['model_state'])
         extract_cg_pyg(args, model, device, train_loader, val_loader)
         return
-    train_pyg(args, model, device, train_loader, val_loader, test_loader)#, batch_size=args.batch_size)
+    train_pyg(args, model, device, train_loader, val_loader, test_loader, writer)#, batch_size=args.batch_size)
+    extract_cg_pyg(args, model, device, train_loader, val_loader)
 
 def benchmark_task_val(args, writer=None, feat="node-label"):
     all_vals = []
@@ -2498,6 +2484,8 @@ def arg_parse():
         default=False,
         help="Whether link prediction side objective is used",
     )
+
+    parser.add_argument("--notes", type=str, help="your notes about this experiment for wandb run")
 
     parser_utils.parse_optimizer(parser)
 
@@ -2660,6 +2648,13 @@ def main():
     path = os.path.join(prog_args.logdir, io_utils.gen_prefix(prog_args))
     writer = SummaryWriter(path)
 
+    run = wandb.init(project="fact-ai", entity="thomas-w",
+                     config=vars(prog_args),
+                     group=prog_args.bmname,
+                     notes=f"{prog_args.notes}", )
+
+    run.name = f"{prog_args.method}_{run.name}"
+
     if prog_args.gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = prog_args.cuda
         print("CUDA", prog_args.cuda)
@@ -2673,8 +2668,8 @@ def main():
         elif prog_args.bmname == 'synthetic' or prog_args.bmname == 'old_synthetic':
             synthetic_task(prog_args, writer=writer)
         else:
-            pyg_task(prog_args, writer=writer)
-            #benchmark_task(prog_args, writer=writer)
+            pyg_task(prog_args, writer=run)
+            # benchmark_task(prog_args, writer=writer)
     elif prog_args.pkl_fname is not None:
         pkl_task(prog_args)
     elif prog_args.dataset is not None:
@@ -2704,5 +2699,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
