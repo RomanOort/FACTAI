@@ -12,6 +12,7 @@ import time
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import wandb
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import copy
@@ -289,11 +290,14 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
 #
 #############################
 
-def train_pyg(args, model, device, train_loader, val_loader, test_loader):
+def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer):
 
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()), lr=0.001
     )
+
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[100, 200], gamma=0.1)
+
 
     print("epochs : ", args.num_epochs)
     for epoch in range(args.num_epochs):
@@ -390,8 +394,20 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
             ypred, att_adj = model(h0, adj, batch_num_nodes)
 
             val_acc += torch.argmax(ypred) == label
+        tacc = train_acc.item() / len(train_loader)
+        vacc = val_acc.item() / len(val_loader)
+        print("Epoch: {}\tTrain accuracy: {}\tValid accuracy: {}".format(epoch, tacc, vacc))
 
-        print("Epoch: {}\tTrain accuracy: {}\tValid accuracy: {}".format(epoch, train_acc.item() / len(train_loader), val_acc.item() / len(val_loader)))
+        lr = [group['lr'] for group in optimizer.param_groups][0]
+
+        writer.log({
+            "epoch": epoch,
+            "train_acc": tacc,
+            "val_acc": vacc,
+            "lr": lr,
+        })
+
+        scheduler.step()
 
     print("wrong samples: ",wrong_samples, len(train_loader))
     test_acc = 0
@@ -421,8 +437,12 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader):
         ypred, att_adj = model(h0, adj, batch_num_nodes)
 
         test_acc += torch.argmax(ypred) == label
-    
-    print("Test accuracy: {}".format(test_acc.item() / len(test_loader)))
+
+    tacc = test_acc.item() / len(test_loader)
+    print("Test accuracy: {}".format(tacc))
+    writer.log({
+        "test_acc": tacc,
+    })
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
@@ -489,7 +509,7 @@ def pyg_task(args, writer=None, feat="node-label"):
         #model.load_state_dict(ckpt_dict['model_state'])
         extract_cg_pyg(args, model, device, train_loader, val_loader)
         return
-    train_pyg(args, model, device, train_loader, val_loader, test_loader)
+    train_pyg(args, model, device, train_loader, val_loader, test_loader, writer)
 
 
 
@@ -2660,6 +2680,14 @@ def main():
     path = os.path.join(prog_args.logdir, io_utils.gen_prefix(prog_args))
     writer = SummaryWriter(path)
 
+
+    run = wandb.init(project="cnn-field-detector", entity="thomas-w",
+                     config=vars(args),
+                     group=args.model,
+                     notes=f"{args.notes}",)
+
+    run.name = f"{args.method}_{run.name}"
+
     if prog_args.gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = prog_args.cuda
         print("CUDA", prog_args.cuda)
@@ -2673,7 +2701,7 @@ def main():
         elif prog_args.bmname == 'synthetic' or prog_args.bmname == 'old_synthetic':
             synthetic_task(prog_args, writer=writer)
         else:
-            pyg_task(prog_args, writer=writer)
+            pyg_task(prog_args, writer=run)
             #benchmark_task(prog_args, writer=writer)
     elif prog_args.pkl_fname is not None:
         pkl_task(prog_args)
