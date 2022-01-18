@@ -1389,7 +1389,9 @@ class ExplainerRCExplainer(explain.Explainer):
         myfile.close()
 
         # TODO: romana: return de stats
-
+        sparsity, fidelity = stats.get_sparsity_fidelity()
+        
+        return sparsity, fidelity
 
 
 
@@ -1919,8 +1921,8 @@ class ExplainerRCExplainer(explain.Explainer):
 
 
             if self.args.eval:
-                self.eval_graphs_2(args, graph_indices, explainer)
-                exit()
+                return self.eval_graphs_2(args, graph_indices, explainer)
+                exit() #stond deze er al?
 
 
 
