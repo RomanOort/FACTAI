@@ -44,9 +44,14 @@ from gcn import *
 
 import configs
 
-def main():
+def main(config=None):
     # Load a configuration
-    prog_args = configs.arg_parse()
+    if config is None:
+        prog_args = configs.arg_parse()
+    else:
+        prog_args = config
+
+    sparsity, fidelity, noise_level, roc_auc = None, None, None, None
     torch.manual_seed(prog_args.seed)
     random.seed(prog_args.seed)
     np.random.seed(prog_args.seed)
@@ -477,7 +482,6 @@ def main():
                 prog_args.multigraph_class,
                 " : ",
             )
-            
             orig_graph_indices=graph_indices
             if prog_args.explainer_method == "pgexplainer_boundary":
                 if prog_args.train_data_sparsity is not None:
@@ -486,8 +490,11 @@ def main():
             else:
                 if prog_args.train_data_sparsity is not None:
                     graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
-                # TODO: romana
-                explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                if prog_args.eval is True:
+                    sparsity, fidelity, noise_level, roc_auc = explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                else:
+                    explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+
 
         elif prog_args.graph_idx == -1:
                 
@@ -595,6 +602,7 @@ def main():
             #     range(400, 450, 1), prog_args
             # )
 
-if __name__ == "__main__":
-    main()
+    return sparsity, fidelity, noise_level, roc_auc
 
+if __name__ == "__main__":
+    print(main())

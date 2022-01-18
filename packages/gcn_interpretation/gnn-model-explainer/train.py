@@ -430,6 +430,10 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> d81502391d0d002a684ca2e9ba4ac84db75a22cd
 # def pyg_task(args, writer=None, feat="node-label"):
 #     dataset_name = args.bmname
 #     path = args.datadir
