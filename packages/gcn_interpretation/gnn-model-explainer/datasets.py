@@ -49,8 +49,10 @@ def get_dataset(dataset_dir, dataset_name, **kwargs):
             T.NormalizeFeatures()
         ])
         dataset = PPI(root=dataset_dir, split='train', pre_transform=transform)
-    elif dataset_name == "MNIST":
+    elif dataset_name == "MNISTSuperpixels":
         dataset = MNISTSuperpixels(root=dataset_dir)
+    elif dataset_name == "MNIST":
+        dataset = GNNBenchmarkDataset(root=dataset_dir, name="MNIST")
     else:
         raise NotImplementedError
 

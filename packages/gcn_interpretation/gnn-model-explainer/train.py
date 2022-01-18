@@ -2519,6 +2519,8 @@ def arg_parse():
         help="Whether link prediction side objective is used",
     )
 
+    parser.add_argument("--notes", type=str, help="your notes about this experiment for wandb run")
+
     parser_utils.parse_optimizer(parser)
 
     parser.add_argument(
@@ -2681,12 +2683,12 @@ def main():
     writer = SummaryWriter(path)
 
 
-    run = wandb.init(project="cnn-field-detector", entity="thomas-w",
-                     config=vars(args),
-                     group=args.model,
-                     notes=f"{args.notes}",)
+    run = wandb.init(project="fact-ai", entity="thomas-w",
+                     config=vars(prog_args),
+                     group=prog_args.bmname,
+                     notes=f"{prog_args.notes}",)
 
-    run.name = f"{args.method}_{run.name}"
+    run.name = f"{prog_args.method}_{run.name}"
 
     if prog_args.gpu:
         os.environ["CUDA_VISIBLE_DEVICES"] = prog_args.cuda
