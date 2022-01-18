@@ -84,7 +84,7 @@ def get_dataloader(dataset, batch_size, split_ratio=None, random_split_flag=Fals
         test = dataset[split_ratio[1]:]
     
     dataloader = dict()
-    dataloader['train'] = DataLoader(train, batch_size=batch_size, shuffle=True)
+    dataloader['train'] = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=4)
     dataloader['val'] = DataLoader(val, batch_size=batch_size, shuffle=False)
     dataloader['test'] = DataLoader(test, batch_size=batch_size, shuffle=False)
     return dataloader
