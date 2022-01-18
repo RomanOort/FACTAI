@@ -332,7 +332,7 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
 
             loss_ep += loss
             loss_count += 1.0
-            if loss_count > 200:
+            if loss_count > args.second_batch_WEIRD:
                 model.zero_grad()
                 loss_ep.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), args.clip)
@@ -2393,6 +2393,8 @@ def pyg_task(args, writer=None, feat="node-label"):
             bn=args.bn,
             dropout=args.dropout,
             args=args,
+            pred_hidden_dims=[20, 10],
+
         ).to(device)
     if args.cg:
         print("Loading ckpt .....")
@@ -2507,7 +2509,17 @@ def arg_parse():
         type=int,
         help="Maximum number of nodes (ignore graghs with nodes exceeding the number.",
     )
-    parser.add_argument("--batch-size", dest="batch_size", type=int, help="Batch size.")
+
+    parser.add_argument("--batch-size",
+                        dest="batch_size",
+                        type=int,
+                        help="Batch size.")
+
+    parser.add_argument("--batch-size-WEIRD",
+                        dest="second_batch_WEIRD",
+                        type=int,
+                        help="An interesting approach at a sort of batching of batches? I dont quite understand.")
+
     parser.add_argument(
         "--epochs", dest="num_epochs", type=int, help="Number of epochs to train."
     )
@@ -2535,10 +2547,17 @@ def arg_parse():
         "--hidden-dim", dest="hidden_dim", type=int, help="Hidden dimension"
     )
     parser.add_argument(
-        "--output-dim", dest="output_dim", type=int, help="Output dimension"
+        "--output-dim", dest="output_dim", type=int, help="Output dimension of the graph part"
     )
     parser.add_argument(
         "--num-classes", dest="num_classes", type=int, help="Number of label classes"
+    )
+    parser.add_argument(
+        "--pred-hidden-dims",
+        dest="pred_hidden_dims",
+        type=list,
+        help="Dims of the fully connected layers",
+        default=list()
     )
     parser.add_argument(
         "--num-gc-layers",
@@ -2595,21 +2614,6 @@ def arg_parse():
         "--add_embedding", dest="add_embedding", default=False, help="add embedding layer "
     )
 
-    parser.add_argument(
-        "--pred-hidden-dim",
-        dest="pred_hidden_dim",
-        type=int,
-        help="hidden dims",
-        default=20
-    )
-
-    parser.add_argument(
-        "--pred-num-layers",
-        dest="pred_num_layers",
-        type=int,
-        help="num layers",
-        default=0
-    )
     parser.set_defaults(
         datadir="data",  # io_parser
         logdir="log",
