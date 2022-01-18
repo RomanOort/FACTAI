@@ -2000,7 +2000,7 @@ class ExplainerRCExplainer(explain.Explainer):
         #     self.feat[graph_idx, rand_order, :] = self.feat[graph_idx,order,:]
         #     self.adj[graph_idx, rand_order, :] = self.adj[graph_idx,order,:]
         #     self.adj[graph_idx, :, rand_order] = self.adj[graph_idx,:,order]
-        log_name = self.args.prefix + "_logdir"
+        log_name = self.args.prefix + f"_seed_{args.seed}" + "_logdir"
         log_path = os.path.join(self.args.ckptdir, log_name)
         if os.path.isdir(log_path):
             print("log dir already exists and will be overwritten")
