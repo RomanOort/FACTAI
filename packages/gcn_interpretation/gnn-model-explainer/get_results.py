@@ -10,7 +10,6 @@ config = {
     "logdir":"log",
     "ckptdir": "ckpt/Mutagenicity",
     "prefix":"",
-    "exp_path":"ckpt/Mutagenicity/rcexp_mutag_seed_1_logdir/rcexp_mutag_seed_1explainer_Mutagenicity_pgeboundary.pth.tar",
     "add_self":"none",
     "dataset":"Mutagenicity",
     "opt":"adam",
