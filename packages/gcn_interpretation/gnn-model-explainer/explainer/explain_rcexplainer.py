@@ -1960,6 +1960,8 @@ class ExplainerRCExplainer(explain.Explainer):
             size = 3035
         elif self.args.bmname == "BA_2Motifs":
             size = 700
+        elif self.args.bmname == "MNIST":
+            size = 3000
         else:
             print(self.args.bmname + " not found!")
             assert (False)

@@ -128,8 +128,8 @@ def main():
 
     # load state_dict (obtained by model.state_dict() when saving checkpoint)
 
-    print(ckpt["model_state"])
-    print(model.state_dict())
+    # print(ckpt["model_state"])
+    # print(model.state_dict())
     model.load_state_dict(ckpt["model_state"])
 
 
