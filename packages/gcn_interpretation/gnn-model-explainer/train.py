@@ -277,6 +277,7 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         "val_num_nodes": val_num_nodes_v,
         "train_idx": len(train_loader)
     }
+    print(cg_data)
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
     
     print("ckpt saved")
@@ -489,6 +490,7 @@ def pyg_task(args, writer=None, feat="node-label"):
         #model.load_state_dict(ckpt_dict['model_state'])
         extract_cg_pyg(args, model, device, train_loader, val_loader)
         return
+    
     train_pyg(args, model, device, train_loader, val_loader, test_loader)
 
 
@@ -2416,6 +2418,7 @@ def pyg_task(args, writer=None, feat="node-label"):
         extract_cg_pyg(args, model, device, train_loader, val_loader)
         return
     train_pyg(args, model, device, train_loader, val_loader, test_loader)#, batch_size=args.batch_size)
+    extract_cg_pyg(args, model, device, train_loader, val_loader)
 
 def benchmark_task_val(args, writer=None, feat="node-label"):
     all_vals = []
