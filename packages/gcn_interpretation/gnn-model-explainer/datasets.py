@@ -76,7 +76,7 @@ def get_dataloader(dataset, batch_size, split_ratio=None, random_split_flag=Fals
         num_eval = int(split_ratio[1] * len(dataset))
         num_test = len(dataset) - num_train - num_eval
 
-        train, eval, test = random_split(dataset, lengths=[num_train, num_eval, num_test],
+        train, val, test = random_split(dataset, lengths=[num_train, num_eval, num_test],
                                          generator=torch.Generator().manual_seed(seed))
     else:
         train = dataset[0:split_ratio[0]]
@@ -85,7 +85,7 @@ def get_dataloader(dataset, batch_size, split_ratio=None, random_split_flag=Fals
     
     dataloader = dict()
     dataloader['train'] = DataLoader(train, batch_size=batch_size, shuffle=True)
-    dataloader['val'] = DataLoader(eval, batch_size=batch_size, shuffle=False)
+    dataloader['val'] = DataLoader(val, batch_size=batch_size, shuffle=False)
     dataloader['test'] = DataLoader(test, batch_size=batch_size, shuffle=False)
     return dataloader
 
