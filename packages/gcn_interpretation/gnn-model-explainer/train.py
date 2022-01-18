@@ -2398,7 +2398,7 @@ def pyg_task(args, writer=None, feat="node-label"):
         model.load_state_dict(ckpt_dict['model_state'])
         extract_cg_pyg(args, model, device, train_loader, val_loader)
         return
-    train_pyg(args, model, device, train_loader, val_loader, test_loader)  # , batch_size=args.batch_size)
+    train_pyg(args, model, device, train_loader, val_loader, test_loader, writer)  # , batch_size=args.batch_size)
 
 
 def benchmark_task_val(args, writer=None, feat="node-label"):
