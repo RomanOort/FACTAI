@@ -979,7 +979,7 @@ class ExplainerRCExplainer(explain.Explainer):
         pred_removed_edges = 0.
         topk = self.args.topk
 
-        noise_iters = 1
+        noise_iters = 1 # TODO: is dit aantal iteraties??
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
         noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
@@ -1368,6 +1368,7 @@ class ExplainerRCExplainer(explain.Explainer):
         print(stats)
         myfile.write("\n \n")
         myfile.write(str(stats))
+        ROC_AUC, noise_values = [], []
         if self.args.noise:
             for nh in noise_handlers:
                 print(nh)
@@ -1379,6 +1380,8 @@ class ExplainerRCExplainer(explain.Explainer):
             myfile.write("\n\n NOISE SUMMARY \n")
             for nh in noise_handlers:
                 print(nh.summary())
+                ROC_AUC.append(nh.AUC.getAUC())
+                noise_values.append(nh.noise_percent)
                 myfile.write("\n")
                 myfile.write(str(nh.summary()))
 
@@ -1388,10 +1391,12 @@ class ExplainerRCExplainer(explain.Explainer):
         print(stats.summary())
         myfile.close()
 
-        # TODO: romana: return de stats
         sparsity, fidelity = stats.get_sparsity_fidelity()
-        
-        return sparsity, fidelity
+        print("SPARSITY", sparsity)
+        print("FIDELITY", fidelity)
+        print("NOISE VALS", noise_values)
+        print("ROC AUC", ROC_AUC)
+        return sparsity, fidelity, noise_values, ROC_AUC
 
 
 
@@ -1918,12 +1923,8 @@ class ExplainerRCExplainer(explain.Explainer):
                     exp_state_dict[name].copy_(param)
             explainer.load_state_dict(exp_state_dict)
 
-
-
             if self.args.eval:
                 return self.eval_graphs_2(args, graph_indices, explainer)
-                exit() #stond deze er al?
-
 
 
         if self.args.bmname == "synthetic" or self.args.bmname == "old_synthetic":
