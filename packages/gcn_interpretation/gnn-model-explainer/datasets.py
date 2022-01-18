@@ -7,7 +7,7 @@ from torch.utils.data import random_split, Subset
 from torch_geometric.utils import to_dense_adj
 from torch_geometric.utils import dense_to_sparse
 from torch_geometric.data import Data, InMemoryDataset, DataLoader
-from torch_geometric.datasets import MoleculeNet, TUDataset, GNNBenchmarkDataset
+from torch_geometric.datasets import MoleculeNet, TUDataset, GNNBenchmarkDataset, MNISTSuperpixels
 import os.path as osp 
 import glob
 import pickle
@@ -49,6 +49,8 @@ def get_dataset(dataset_dir, dataset_name, **kwargs):
             T.NormalizeFeatures()
         ])
         dataset = PPI(root=dataset_dir, split='train', pre_transform=transform)
+    elif dataset_name == "MNISTSuperpixels":
+        dataset = MNISTSuperpixels(root=dataset_dir)
     elif dataset_name == "MNIST":
         dataset = GNNBenchmarkDataset(root=dataset_dir, name="MNIST")
     else:
@@ -76,7 +78,7 @@ def get_dataloader(dataset, batch_size, split_ratio=None, random_split_flag=Fals
         num_eval = int(split_ratio[1] * len(dataset))
         num_test = len(dataset) - num_train - num_eval
 
-        train, eval, test = random_split(dataset, lengths=[num_train, num_eval, num_test],
+        train, val, test = random_split(dataset, lengths=[num_train, num_eval, num_test],
                                          generator=torch.Generator().manual_seed(seed))
     else:
         train = dataset[0:split_ratio[0]]
@@ -84,8 +86,8 @@ def get_dataloader(dataset, batch_size, split_ratio=None, random_split_flag=Fals
         test = dataset[split_ratio[1]:]
     
     dataloader = dict()
-    dataloader['train'] = DataLoader(train, batch_size=batch_size, shuffle=True)
-    dataloader['val'] = DataLoader(eval, batch_size=batch_size, shuffle=False)
+    dataloader['train'] = DataLoader(train, batch_size=batch_size, shuffle=True, num_workers=4)
+    dataloader['val'] = DataLoader(val, batch_size=batch_size, shuffle=False)
     dataloader['test'] = DataLoader(test, batch_size=batch_size, shuffle=False)
     return dataloader
 

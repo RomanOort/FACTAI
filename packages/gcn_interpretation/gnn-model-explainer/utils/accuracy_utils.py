@@ -195,6 +195,18 @@ class Stats(object):
             summary_fid += "{:1.4f}".format(fid) + ','
         retval += "Sparsity, {}\nFidelity, {}\n".format(summary_sp, summary_fid)
         return retval
+    
+    def get_sparsity_fidelity(self):
+        sparsity = []
+        fidelity = []
+        
+        for i, sp in enumerate(self.edgeFidelitySparsity.avg):
+            fid = self.edgeFidelityPredProbChange.avg[i]
+            sparsity.append(sp)
+            fidelity.append(fid)
+            
+        return sparsity, fidelity
+        
 
 
 def getHNodes(graph_idx, sub_label_nodes, sub_label_array, args):
