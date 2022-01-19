@@ -9,6 +9,8 @@ import random
 import shutil
 import time
 
+import tqdm
+
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
@@ -70,7 +72,8 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     all_adjs = {}
     all_num_nodes = {}
     w_lbl = 0
-    for batch_idx, data in enumerate(train_loader):
+    print("Train data:")
+    for batch_idx, data in tqdm.tqdm(enumerate(train_loader)):
 
         feats = data.x
         if (data.edge_index.shape[1] == 0):
@@ -92,13 +95,13 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         if h0.shape[1] > num_nodes:
             h0 = h0[:, :num_nodes, :]
 
-        try:
-            if label.item() != 0 and label.item() != 1:
-                print(label)
-                w_lbl += 1
-                # continue
-        except:
-            x = 0
+        # try:
+        #     if label.item() != 0 and label.item() != 1:
+        #         print(label)
+        #         w_lbl += 1
+        #         # continue
+        # except:
+        #     x = 0
         all_feats[batch_idx] = h0.cpu().numpy()
         all_labels[batch_idx] = label.cpu().numpy()
         all_adjs[batch_idx] = adj.cpu().numpy()
@@ -125,7 +128,8 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     val_labels = {}
     val_adjs = {}
     val_num_nodes = {}
-    for batch_idx, data in enumerate(val_loader):
+    print("Validation data:")
+    for batch_idx, data in tqdm.tqdm(enumerate(val_loader)):
 
         feats = data.x
         if (data.edge_index.shape[1] == 0):
@@ -219,7 +223,7 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     val_labels_v = None
     val_preds_v = None
     val_num_nodes_v = None
-    for k in val_adjs.keys():
+    for k in tqdm.tqdm(val_adjs.keys()):
         this_feat = val_adjs[k].shape[1]
         adj = np.zeros((max_feat, max_feat))
         adj[:this_feat, :this_feat] = val_adjs[k][:this_feat, :this_feat]
@@ -269,7 +273,6 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
         "val_num_nodes": val_num_nodes_v,
         "train_idx": len(train_loader)
     }
-    print(cg_data)
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
     print("ckpt saved")
@@ -427,7 +430,10 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> d81502391d0d002a684ca2e9ba4ac84db75a22cd
 # def pyg_task(args, writer=None, feat="node-label"):
 #     dataset_name = args.bmname
 #     path = args.datadir
