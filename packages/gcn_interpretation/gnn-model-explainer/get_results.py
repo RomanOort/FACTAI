@@ -40,7 +40,7 @@ config = {
     "pred_hidden_dim": 20,
     "pred_num_layers": 0,
     "bn": False,
-    "train_data_sparsity": 1.0,
+    "train_data_sparsity": 0.1,
     "draw_graphs": False,
     "inverse_noise": False,
     "gumbel": False,
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     fidelity_res = load_data(results_dir + fidelity_path)
     roc_auc_res = load_data(results_dir + roc_path)
 
-    for seed in SEEDS[:-2]:
+    for seed in SEEDS[-2:]:
         print("Evaluating seed", seed)
         if str(seed) in fidelity_res and str(seed) in roc_auc_res:
             continue
