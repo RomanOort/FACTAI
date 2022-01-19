@@ -4,5 +4,7 @@ opencv-python
 networkx
 matplotlib
 tensorboard
+tensorboardX
 jupyter
 tqdm
+wandb

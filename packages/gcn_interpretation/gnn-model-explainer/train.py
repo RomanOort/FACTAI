@@ -2520,7 +2520,10 @@ def arg_parse():
     parser.add_argument("--batch-size-WEIRD",
                         dest="second_batch_WEIRD",
                         type=int,
-                        help="An interesting approach at a sort of batching of batches? I dont quite understand.")
+                        default=2,
+                        help="An interesting approach at a sort of batching of batches? I dont quite understand. This "
+                             "works like a subdivision, but default of 200 is a weird subdivision because that just "
+                             "hurts performance")
 
     parser.add_argument(
         "--epochs", dest="num_epochs", type=int, help="Number of epochs to train."
