@@ -263,8 +263,9 @@ class AUC(object):
 
 
     def addEdgesFromAdj(self, masked_adj, h_edges, dataset=None):
-
+        print("MASKED ADJ", masked_adj)
         adj = coo_matrix(masked_adj)
+        print("ADJ", adj)
 
         # print("h_edges: ", h_edges.keys())
         for r, c in list(zip(adj.row, adj.col)):
@@ -294,6 +295,7 @@ class AUC(object):
             return 0
         self.reals.append(0)
         self.preds.append(0)
+        print("REALS", self.reals)
         return roc_auc_score(self.reals, self.preds)
 
     def clearAUC(self):
