@@ -29,13 +29,15 @@ class NoiseHandler(object):
         self.pred_change = AverageMeter()
         self.prob_change = AverageMeter()
 
-        self.topk = [8] # TODO: belangrijk!
+        self.topk = [4] # TODO: belangrijk!
         self.node_topk = [1, 2, 4, 8]
     
         # AUC mode
         self.mAP = AverageMeter()
         self.AUC = accuracy_utils.AUC()
-        self.AUC_ind = AverageMeter(size=2)
+        # self.AUC_ind = AverageMeter(size=2)
+        self.AUC_ind = 0
+        # self.AUC_ind.avg = 0
         self.nDCG = AverageMeter()
 
         self.AUC_roll = []
@@ -172,19 +174,17 @@ class NoiseHandler(object):
         gt = masked_adj
         gt = coo_matrix(gt)
 
-
         for topk in self.topk:
             num_elem = len(np.nonzero(masked_adj)[0]) // 2 - 1
             topk = min(topk, num_elem)
 
             threshold = sorted(zip(gt.row, gt.col, gt.data), key = lambda x: x[2], reverse=True)[topk * 2][2]
-
+            # print("THRESHOLD", threshold)
             gt_edges = masked_adj >= threshold
-            
-            AUC_ind = accuracy_utils.AUC()
-            AUC_ind.addEdgesFromAdj(masked_adj_noise, gt_edges)
-            self.AUC_ind.selective_update(AUC_ind.getAUC(), noise_label)
 
+            # AUC_ind = accuracy_utils.AUC()
+            # AUC_ind.addEdgesFromAdj(masked_adj_noise, gt_edges)
+            # self.AUC_ind.selective_update(AUC_ind.getAUC(), noise_label)
 
             mAP = accuracy_utils.getmAPAdj(masked_adj_noise, gt_edges, edge_thresh=topk)
             self.mAP.update(mAP)
@@ -206,7 +206,7 @@ class NoiseHandler(object):
         if self.mode == 'auc':
             retval += "Average mAP: {}\n".format(self.mAP.avg)
             retval += "ROC AUC: {}\n".format(self.AUC.getAUC())
-            retval += "AUC_ind: {}\n".format(self.AUC_ind.avg)
+            # retval += "AUC_ind: {}\n".format(self.AUC_ind.avg)
             retval += "nDCG: {}\n".format(self.nDCG.avg)
         elif self.mode == 'acc':
             retval += "Edge accuracy: {}\n".format(self.edge_accuracy.avg)
@@ -221,7 +221,7 @@ class NoiseHandler(object):
             return self.summary_acc()
 
     def summary_auc(self):
-        return "{}, {}, {}".format(self.noise_percent, self.AUC_ind.avg, self.sample_count)
+        return "{}, {}, {}".format(self.noise_percent, 0, self.sample_count)
     def summary_acc(self):
         ret = ""
 
@@ -616,12 +616,9 @@ class AdversarialNoiseHandler(NoiseHandler):
         new_feat = self.adversarial_feat[graph_idx]
         new_adj = self.adversarial_adj[graph_idx]
 
-        print("ADV NOISE")
         self.feat_diffs.append(np.sum(np.abs(feat - new_feat)))
         self.adj_diffs.append((np.sum(np.abs(adj - new_adj))/np.sum(adj)))
 
-        print(np.sum(self.feat_diffs)/len(self.feat_diffs))
-        print(np.sum(self.adj_diffs)/len(self.adj_diffs))
         assert(num_nodes == self.adversarial_num_nodes[graph_idx])
 
         adj_diff = np.sum(np.abs(adj - new_adj))

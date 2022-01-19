@@ -262,23 +262,17 @@ class AUC(object):
             self.preds.append(masked_adj[r][c])
 
 
-    def addEdgesFromAdj(self, masked_adj, h_edges, dataset=None):
-        print("MASKED ADJ", masked_adj)
-        adj = coo_matrix(masked_adj)
-        print("ADJ", adj)
+    def addEdgesFromAdj(self, masked_adj_n, gt_edges, dataset=None):
+        adj = coo_matrix(masked_adj_n)
 
-        # print("h_edges: ", h_edges.keys())
         for r, c in list(zip(adj.row, adj.col)):
-            # print("rc: ",r,c)
-            if h_edges[r,c] != 0 or h_edges[c, r] != 0:
+            if gt_edges[r, c] != 0 or gt_edges[c, r] != 0:
                 self.reals.append(1)
-                # print("adding 1")
 
             else:
                 self.reals.append(0)
-                # print("adding 0")
 
-            self.preds.append(masked_adj[r][c])
+            self.preds.append(masked_adj_n[r][c])
 
     def addEdgesFromDict(self, masked_adj, h_edges, dataset=None):
         adj = coo_matrix(masked_adj)
@@ -293,9 +287,8 @@ class AUC(object):
     def getAUC(self):
         if len(self.reals) == 0 or len(self.preds) == 0:
             return 0
-        self.reals.append(0)
-        self.preds.append(0)
-        print("REALS", self.reals)
+
+        # TODO: ugly dugly fix
         return roc_auc_score(self.reals, self.preds)
 
     def clearAUC(self):

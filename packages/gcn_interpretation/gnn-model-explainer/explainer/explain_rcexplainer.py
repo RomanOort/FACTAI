@@ -979,7 +979,7 @@ class ExplainerRCExplainer(explain.Explainer):
         pred_removed_edges = 0.
         topk = self.args.topk
 
-        noise_iters = 10 # TODO: is dit aantal iteraties??
+        noise_iters = 5 # TODO: is dit aantal iteraties??
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
         noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
@@ -1008,10 +1008,10 @@ class ExplainerRCExplainer(explain.Explainer):
         # self.adj[graph_idx, rand_order, :] = self.adj[graph_idx, order, :]
         # self.adj[graph_idx, :, rand_order] = self.adj[graph_idx, :, order]
         stats = accuracy_utils.Stats("PGExplainer_Boundary", self, self.model)
-
-        for graph_idx in graph_indices:
+        from tqdm import tqdm
+        for graph_idx in tqdm(graph_indices):
             with torch.no_grad():
-                print("doing for graph index: ", graph_idx)
+                # print("doing for graph index: ", graph_idx)
 
                 # extract features and
 
@@ -1076,7 +1076,7 @@ class ExplainerRCExplainer(explain.Explainer):
 
 
                 pred_try, _ = self.model(x.cuda(), adj.cuda(), batch_num_nodes=[sub_nodes.cpu().numpy()])
-                print("pred debug: ", self.pred[0][graph_idx], pred_try, pred, inv_pred)
+                # print("pred debug: ", self.pred[0][graph_idx], pred_try, pred, inv_pred)
                 # if torch.argmax(pred[0]) != pred_label:
                 flips[pred_label] += 1.0
                 # if torch.argmax(inv_pred[0]) == pred_label:
@@ -1097,7 +1097,7 @@ class ExplainerRCExplainer(explain.Explainer):
 
                 # topk_adj, topk_x = noise_utils.filterGT(masked_adj, sub_adj[0], x, h_edges[graph_idx])
 
-                print("Adj: ", np.sum(topk_adj), np.sum(sub_adj[0]))
+                # print("Adj: ", np.sum(topk_adj), np.sum(sub_adj[0]))
 
                 topk_adj_t = torch.from_numpy(topk_adj).float().cuda()
                 pred_topk, _ = self.model(x.cuda(), topk_adj_t.unsqueeze(0), batch_num_nodes=[sub_nodes.cpu().numpy()])
@@ -1208,13 +1208,13 @@ class ExplainerRCExplainer(explain.Explainer):
                     # print("pred debug: ", self.pred[0][graph_idx], pred_try, pred, torch.nn.functional.softmax(pred_masked))
 
                 acc_count += 1.0
-                print("adj: ", np.sum(masked_adj), np.sum(adj.cpu().numpy()))
                 mask_density = np.sum(masked_adj) / np.sum(adj.cpu().numpy())
                 avg_mask_density += mask_density
                 label = self.label[graph_idx]
 
                 if self.args.noise:
                     for n_iter in range(noise_iters):
+                        temp_adj = masked_adj.copy()
                         for nh in noise_handlers:
                             try:
                                 noise_feat, noise_adj, noise_label = nh.sample(sub_feat[0], sub_adj[0], sub_nodes)
@@ -1224,6 +1224,7 @@ class ExplainerRCExplainer(explain.Explainer):
                             pred_n, masked_adj_n, _, _, _ = explainer((noise_feat, emb_noise[0], noise_adj, tmp, label, sub_nodes), training=False)
                             masked_adj_n = masked_adj_n.cpu().detach() * noise_adj
                             nh.update(masked_adj, masked_adj_n.cpu().detach().numpy(), sub_adj[0], noise_adj.cpu().detach().numpy(), None, graph_idx, noise_label, x, sub_nodes)
+                # exit(1)
         if not args.noise:
             global_noise_count = 1.0
             noise_diff_count = 1.0
@@ -1470,7 +1471,7 @@ class ExplainerRCExplainer(explain.Explainer):
         model_sum = 0.0
         mean_auc = 0.0
 
-        noise_iters = 1
+        noise_iters = 10
         noise_range = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 1]
         noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
