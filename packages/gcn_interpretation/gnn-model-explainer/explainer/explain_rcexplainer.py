@@ -980,7 +980,7 @@ class ExplainerRCExplainer(explain.Explainer):
         topk = self.args.topk
 
         noise_iters = 10 # TODO: is dit aantal iteraties??
-        noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
+        noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]addEdges2
         noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
 
@@ -1964,6 +1964,8 @@ class ExplainerRCExplainer(explain.Explainer):
             size = 700
         elif self.args.bmname == "MNIST":
             size = 38500
+        elif self.args.bmname == "MNISTSuperpixels":
+            size = 1001
         else:
             print(self.args.bmname + " not found!")
             assert (False)
