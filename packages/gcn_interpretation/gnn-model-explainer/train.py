@@ -74,7 +74,8 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     w_lbl = 0
     print("Train data:")
     for batch_idx, data in tqdm.tqdm(enumerate(train_loader)):
-
+        if batch_idx > 1000:
+            break
         feats = data.x
         if (data.edge_index.shape[1] == 0):
             continue
@@ -130,7 +131,8 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     val_num_nodes = {}
     print("Validation data:")
     for batch_idx, data in tqdm.tqdm(enumerate(val_loader)):
-
+        if batch_idx > 1000:
+            break
         feats = data.x
         if (data.edge_index.shape[1] == 0):
             continue
@@ -185,7 +187,7 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     all_labels_v = None
     all_preds_v = None
     all_num_nodes_v = None
-    for k in all_adjs.keys():
+    for k in tqdm.tqdm(all_adjs.keys()):
         this_feat = all_adjs[k].shape[1]
         adj = np.zeros((max_feat, max_feat))
         adj[:this_feat, :this_feat] = all_adjs[k][:this_feat, :this_feat]
@@ -429,74 +431,6 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
     })
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
-
-<<<<<<< HEAD
-=======
-
->>>>>>> d81502391d0d002a684ca2e9ba4ac84db75a22cd
-# def pyg_task(args, writer=None, feat="node-label"):
-#     dataset_name = args.bmname
-#     path = args.datadir
-#     # path = "/home/mohit/Mohit/gcn_interpretation/data/Graph-SST2"
-#     # path = "/home/mohit/Mohit/gcn_interpretation/data"
-#     # path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'datasets')
-#     dataset = datasets.get_dataset(dataset_dir=path, dataset_name=dataset_name)
-#     dataset.process()
-#     if args.cg:
-#         args.batch_size = 1
-#         batch_size = 1
-#     else:
-#         args.batch_size = 1
-#         batch_size = 1
-#     dataloaders = datasets.get_dataloader(dataset, batch_size=args.batch_size, split_ratio=[0.7, 0.2],
-#                                           random_split_flag=True)
-#     train_loader = dataloaders['train']
-#     val_loader = dataloaders['val']
-#     test_loader = dataloaders['test']
-#
-#     input_dim = next(iter(test_loader)).x.shape[-1]
-#     device = torch.device('cuda' if torch.cuda.is_available() and args.gpu else 'cpu')
-#
-#     if args.method == "soft-assign":
-#         print("Method: soft-assign")
-#         model = models.SoftPoolingGcnEncoder(
-#             max_num_nodes,
-#             input_dim,
-#             args.hidden_dim,
-#             args.output_dim,
-#             args.num_classes,
-#             args.num_gc_layers,
-#             args.hidden_dim,
-#             assign_ratio=args.assign_ratio,
-#             num_pooling=args.num_pool,
-#             bn=args.bn,
-#             dropout=args.dropout,
-#             linkpred=args.linkpred,
-#             args=args,
-#             assign_input_dim=assign_input_dim,
-#         ).to(device)
-#     else:
-#         print("Method: base")
-#         print("embed:", args.add_embedding)
-#         model = models.GcnEncoderGraph(
-#             input_dim,
-#             args.hidden_dim,
-#             args.output_dim,
-#             args.num_classes,
-#             args.num_gc_layers,
-#             pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
-#             device=device,
-#             bn=args.bn,
-#             dropout=args.dropout,
-#             args=args,
-#         ).to(device)
-#     if args.cg:
-#         # print("Loading ckpt .....")
-#         # ckpt_dict = io_utils.load_ckpt(args)
-#         # model.load_state_dict(ckpt_dict['model_state'])
-#         extract_cg_pyg(args, model, device, train_loader, val_loader)
-#         return
-#     train_pyg(args, model, device, train_loader, val_loader, test_loader, writer)
 
 
 #############################
