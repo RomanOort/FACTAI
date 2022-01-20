@@ -20,8 +20,8 @@ import utils.io_utils as io_utils
 # from explainer import explain_boundary_nn as explain
 
 # from explainer import explain_boundary_joint
-# from explainer import explain_gnnexplainer
-# from explainer import explain_pgexplainer# _node as explain_pgexplainer
+from explainer import explain_gnnexplainer
+from explainer import explain_pgexplainer# _node as explain_pgexplainer
 # from explainer import explain_twopgexplainer# _node as explain_pgexplainer
 # from explainer import explain_pgexplainer_node
 # from explainer import explain_rcexplainer_noldb

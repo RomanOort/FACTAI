@@ -62,7 +62,7 @@ config = {
     "gpu": True,
     "eval": True,
     "noise": True,
-    "apply_filter": True,
+    "apply_filter": False,
     "writer": True,
     "bias": True,
     "clean_log": False,

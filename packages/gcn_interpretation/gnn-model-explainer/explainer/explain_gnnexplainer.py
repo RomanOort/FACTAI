@@ -63,9 +63,9 @@ noise_percent = 0.0
 
 nbr_data = None
 
-sub_label_nodes = pickle.load(open(
-    "synthetic_data_8000_comb_norep_max20_12dlbls_nofake.p",
-    "rb"))['sub_label_nodes']
+# sub_label_nodes = pickle.load(open(
+#     "synthetic_data_8000_comb_norep_max20_12dlbls_nofake.p",
+#     "rb"))['sub_label_nodes']
 
 class ExplainerGnnExplainer(explain.Explainer):
     def __init__(
