@@ -337,7 +337,7 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
 
             loss_ep += loss
             loss_count += 1.0
-            if loss_count > 200:
+            if loss_count > args.second_batch_WEIRD:
                 model.zero_grad()
                 loss_ep.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), args.clip)
@@ -431,6 +431,70 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
     })
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
+
+# def pyg_task(args, writer=None, feat="node-label"):
+#     dataset_name = args.bmname
+#     path = args.datadir
+#     # path = "/home/mohit/Mohit/gcn_interpretation/data/Graph-SST2"
+#     # path = "/home/mohit/Mohit/gcn_interpretation/data"
+#     # path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'datasets')
+#     dataset = datasets.get_dataset(dataset_dir=path, dataset_name=dataset_name)
+#     dataset.process()
+#     if args.cg:
+#         args.batch_size = 1
+#         batch_size = 1
+#     else:
+#         args.batch_size = 1
+#         batch_size = 1
+#     dataloaders = datasets.get_dataloader(dataset, batch_size=args.batch_size, split_ratio=[0.7, 0.2],
+#                                           random_split_flag=True)
+#     train_loader = dataloaders['train']
+#     val_loader = dataloaders['val']
+#     test_loader = dataloaders['test']
+#
+#     input_dim = next(iter(test_loader)).x.shape[-1]
+#     device = torch.device('cuda' if torch.cuda.is_available() and args.gpu else 'cpu')
+#
+#     if args.method == "soft-assign":
+#         print("Method: soft-assign")
+#         model = models.SoftPoolingGcnEncoder(
+#             max_num_nodes,
+#             input_dim,
+#             args.hidden_dim,
+#             args.output_dim,
+#             args.num_classes,
+#             args.num_gc_layers,
+#             args.hidden_dim,
+#             assign_ratio=args.assign_ratio,
+#             num_pooling=args.num_pool,
+#             bn=args.bn,
+#             dropout=args.dropout,
+#             linkpred=args.linkpred,
+#             args=args,
+#             assign_input_dim=assign_input_dim,
+#         ).to(device)
+#     else:
+#         print("Method: base")
+#         print("embed:", args.add_embedding)
+#         model = models.GcnEncoderGraph(
+#             input_dim,
+#             args.hidden_dim,
+#             args.output_dim,
+#             args.num_classes,
+#             args.num_gc_layers,
+#             pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
+#             device=device,
+#             bn=args.bn,
+#             dropout=args.dropout,
+#             args=args,
+#         ).to(device)
+#     if args.cg:
+#         # print("Loading ckpt .....")
+#         # ckpt_dict = io_utils.load_ckpt(args)
+#         # model.load_state_dict(ckpt_dict['model_state'])
+#         extract_cg_pyg(args, model, device, train_loader, val_loader)
+#         return
+#     train_pyg(args, model, device, train_loader, val_loader, test_loader, writer)
 
 
 #############################
@@ -2333,6 +2397,8 @@ def pyg_task(args, writer=None, feat="node-label"):
             bn=args.bn,
             dropout=args.dropout,
             args=args,
+            pred_hidden_dims=[20, 10],
+
         ).to(device)
     if args.cg:
         print("Loading ckpt .....")
@@ -2447,7 +2513,20 @@ def arg_parse():
         type=int,
         help="Maximum number of nodes (ignore graghs with nodes exceeding the number.",
     )
-    parser.add_argument("--batch-size", dest="batch_size", type=int, help="Batch size.")
+
+    parser.add_argument("--batch-size",
+                        dest="batch_size",
+                        type=int,
+                        help="Batch size.")
+
+    parser.add_argument("--batch-size-WEIRD",
+                        dest="second_batch_WEIRD",
+                        type=int,
+                        default=2,
+                        help="An interesting approach at a sort of batching of batches? I dont quite understand. This "
+                             "works like a subdivision, but default of 200 is a weird subdivision because that just "
+                             "hurts performance")
+
     parser.add_argument(
         "--epochs", dest="num_epochs", type=int, help="Number of epochs to train."
     )
@@ -2475,10 +2554,17 @@ def arg_parse():
         "--hidden-dim", dest="hidden_dim", type=int, help="Hidden dimension"
     )
     parser.add_argument(
-        "--output-dim", dest="output_dim", type=int, help="Output dimension"
+        "--output-dim", dest="output_dim", type=int, help="Output dimension of the graph part"
     )
     parser.add_argument(
         "--num-classes", dest="num_classes", type=int, help="Number of label classes"
+    )
+    parser.add_argument(
+        "--pred-hidden-dims",
+        dest="pred_hidden_dims",
+        type=list,
+        help="Dims of the fully connected layers",
+        default=list()
     )
     parser.add_argument(
         "--num-gc-layers",
@@ -2535,21 +2621,6 @@ def arg_parse():
         "--add_embedding", dest="add_embedding", default=False, help="add embedding layer "
     )
 
-    parser.add_argument(
-        "--pred-hidden-dim",
-        dest="pred_hidden_dim",
-        type=int,
-        help="hidden dims",
-        default=20
-    )
-
-    parser.add_argument(
-        "--pred-num-layers",
-        dest="pred_num_layers",
-        type=int,
-        help="num layers",
-        default=0
-    )
     parser.set_defaults(
         datadir="data",  # io_parser
         logdir="log",

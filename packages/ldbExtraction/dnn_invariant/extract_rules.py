@@ -39,6 +39,8 @@ import matplotlib.pyplot as plt
 
 import random
 
+import tqdm
+
 BASE_DIRECTORY = "/home/fisher/GCN-Group-interpretation/ai-adversarial-detection/dnn_invariant"
 
 def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=None, graph_indices=None, pool_size=50):
@@ -386,6 +388,40 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
 
         dict_t = None
         #dict_t = torch.load(BASE_DIRECTORY + "/dnn_invariant/mdls/Mutagenicity_base_h20_o20.pth.tar")
+        is_graph_classification = True
+    elif dataset_name == "MNIST":
+        num_classes = 10
+        model = GcnEncoderGraph(
+            1, # input_dim?????
+            20,
+            20,
+            num_classes,
+            args.num_gc_layers,
+            pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
+            bn=False,
+            dropout=0.0,
+            args=None,
+            add_self = (args.add_self == "none")
+        ).cuda()
+
+        dict_t = None
+        is_graph_classification = True
+    elif dataset_name == "MNISTSuperpixels":
+        num_classes = 10
+        model = GcnEncoderGraph(
+            1, # input_dim?????
+            20,
+            20,
+            num_classes,
+            args.num_gc_layers,
+            pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
+            bn=False,
+            dropout=0.0,
+            args=None,
+            add_self = (args.add_self == "none")
+        ).cuda()
+
+        dict_t = None
         is_graph_classification = True
 
     if is_graph_classification:
@@ -774,7 +810,7 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     for i in range(len(indices)):
         idx2rule[i] = None
     
-    for i in range(len(indices)):
+    for i in tqdm.tqdm(range(len(indices))):
         rule_label = train_data_upt._data[2][i]
 
         step_3 = time.time()
@@ -873,7 +909,7 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
             boundaries_info.append(boundary_dict)
         rule_dict['boundary'] = boundaries_info
         rule_dict['label'] = rule_label.cpu().item()
-        print("Rules extracted: ", rule_dict)
+        #print("Rules extracted: ", rule_dict)
         rule_dict_list.append(rule_dict)
         #end saving info for gnn-explainer
 

@@ -89,7 +89,7 @@ class GcnEncoderGraph(nn.Module):
         label_dim,
         num_layers,
         device="cpu",
-        pred_hidden_dims=[],#[6],
+        pred_hidden_dims=None,
         concat=False,
         bn=False,
         dropout=0.0,

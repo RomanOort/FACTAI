@@ -98,7 +98,7 @@ class Trainer():
     @staticmethod
     def evalAccuracyOfModel(model, data):
         data_loader = DataLoader(data, batch_size=30, shuffle=False)
-
+        
         gt_labels = data._getTensorLabels().cpu().numpy()
 
         pred_labels_list = []
@@ -125,7 +125,6 @@ class Trainer():
                 pred_labels_list.append(predicted.cpu().numpy())
 
         import numpy as np
-
         pred_probs  = np.concatenate(pred_probs_list)
         pred_labels = np.concatenate(pred_labels_list)
 
