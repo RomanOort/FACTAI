@@ -491,7 +491,7 @@ def main(config=None):
                 if prog_args.train_data_sparsity is not None:
                     graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
                 if prog_args.eval is True:
-                    sparsity, fidelity, noise_level, roc_auc = explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
                 else:
                     explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
 
@@ -602,7 +602,7 @@ def main(config=None):
             #     range(400, 450, 1), prog_args
             # )
 
-    return sparsity, fidelity, noise_level, roc_auc
+    return train, test
 
 if __name__ == "__main__":
     print(main())

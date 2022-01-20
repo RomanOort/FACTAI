@@ -123,8 +123,9 @@ if __name__ == "__main__":
             raise IOError("Seed file not available", config["exp_path"])
 
         args = SimpleNamespace(**config)  # Namespace from dict
-        sparsity, fidelity, noise_level, roc_auc = main(args)
+        train, test = main(args)
 
+        # fix me
         store_fid(fidelity, sparsity, seed, fidelity_res)
         store_auc(noise_level, roc_auc, seed, roc_auc_res)
 
