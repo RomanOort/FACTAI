@@ -233,12 +233,51 @@ class ExplainerPgmExplainer(explain.Explainer):
         pgm_nodes = list(ind_top_p)
         
         return pgm_nodes, p_values, candidate_nodes
-    
+
+    def get_graph_inputs(self, graph_idx):
+        sub_nodes = None
+        if len(self.adj.shape) < 3:
+            sub_adj = self.adj
+        else:
+            sub_adj = self.adj[graph_idx]
+        sub_feat = self.feat[graph_idx, :]
+        sub_label = self.label[graph_idx]
+
+        if self.num_nodes is not None:
+            sub_nodes = self.num_nodes[graph_idx]
+        else:
+            sub_nodes = None
+        neighbors = np.asarray(range(self.adj.shape[0]))  # 1,2,3....num_nodes
+
+        sub_adj = np.expand_dims(sub_adj, axis=0)
+        sub_feat = np.expand_dims(sub_feat, axis=0)
+
+        adj = torch.tensor(sub_adj, dtype=torch.float)
+        x = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
+        label = torch.tensor(sub_label, dtype=torch.long)
+
+        return adj, x, label, sub_nodes
+
+    def get_node_inputs(self, node_idx):
+        node_idx_new, sub_adj, sub_feat, sub_label, neighbors = self.extract_neighborhood_from_saved_data(
+            node_idx, self.args.bmname
+        )
+        sub_adj = np.expand_dims(sub_adj, axis=0)
+        sub_feat = np.expand_dims(sub_feat, axis=0)
+
+        adj = torch.tensor(sub_adj, dtype=torch.float)
+        x = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
+        label = torch.tensor(sub_label, dtype=torch.long)
+
+        return adj, x, label, node_idx_new
+
+
+
     # GRAPH EXPLAINER
     def explain_graphs(self, args, graph_indices, test_graph_indices=None):
 
         graph_indices = list(graph_indices)
-        stats = accuracy_utils.Stats("PGMExplainer", self)
+        stats = accuracy_utils.Stats("PGMExplainer", self, self.model)
 
         graph_mode = self.graph_mode
 
@@ -259,44 +298,6 @@ class ExplainerPgmExplainer(explain.Explainer):
             pred_masked = torch.softmax(logits_masked, dim=-1)
             pred_prob_change = pred[pred_label] - pred_masked[pred_label]
             return pred_change, pred_prob_change
-
-        def get_graph_inputs(self, graph_idx):
-            sub_nodes = None
-            if len(self.adj.shape) < 3:
-                sub_adj = self.adj
-            else:
-                sub_adj = self.adj[graph_idx]
-            sub_feat = self.feat[graph_idx, :]
-            sub_label = self.label[graph_idx]
-
-            if self.num_nodes is not None:
-                sub_nodes = self.num_nodes[graph_idx]
-            else:
-                sub_nodes = None
-            neighbors = np.asarray(range(self.adj.shape[0]))  # 1,2,3....num_nodes
-
-            sub_adj = np.expand_dims(sub_adj, axis=0)
-            sub_feat = np.expand_dims(sub_feat, axis=0)
-
-            adj = torch.tensor(sub_adj, dtype=torch.float)
-            x = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-            label = torch.tensor(sub_label, dtype=torch.long)
-
-            return adj, x, label, sub_nodes
-
-        def get_node_inputs(self, node_idx):
-            node_idx_new, sub_adj, sub_feat, sub_label, neighbors = self.extract_neighborhood_from_saved_data(
-                node_idx, self.args.bmname
-            )
-            sub_adj = np.expand_dims(sub_adj, axis=0)
-            sub_feat = np.expand_dims(sub_feat, axis=0)
-
-            adj   = torch.tensor(sub_adj, dtype=torch.float)
-            x     = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-            label = torch.tensor(sub_label, dtype=torch.long)
-            
-            return adj, x, label, node_idx_new
-
         
         nodeFidelityPredChange =  explain.AverageMeter(size=len(stats.nodesparsity))
         nodeFidelityPredProbChange =  explain.AverageMeter(size=len(stats.nodesparsity))
@@ -314,8 +315,9 @@ class ExplainerPgmExplainer(explain.Explainer):
         
         times = []
 
-        for graph_idx in graph_indices:
-            print("Doing for: " + str(graph_idx))
+        from tqdm import tqdm
+        for graph_idx in tqdm(graph_indices):
+            # print("Doing for: " + str(graph_idx))
             
             # evaluate original input
             if graph_mode:
@@ -329,7 +331,6 @@ class ExplainerPgmExplainer(explain.Explainer):
 
             end = time.time()
             times.append(end - start)
-            print(np.mean(times), np.std(times))
             batch_num_nodes = [sub_nodes.cpu().numpy()] if sub_nodes is not None else None
 
             logits, _ = self.model(x, adj, batch_num_nodes=batch_num_nodes)
@@ -405,8 +406,6 @@ class ExplainerPgmExplainer(explain.Explainer):
                             ind_top_p = np.argpartition(p_values_n, top_p)[0:top_p]
                             pgm_nodes_sp_n = list(ind_top_p) 
 
-                            print(sparsity, nh.noise_percent, pgm_nodes_sp_gt, pgm_nodes_sp_n)
-                        
                             # p_values = torch.tensor(p_values, dtype=torch.float32)
                             # masked_adj_n = (torch.mul(adj[0], p_values) + torch.mul(p_values.T, adj[0])) / 2
                             # masked_adj_n = masked_adj_n.numpy()

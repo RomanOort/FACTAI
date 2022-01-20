@@ -30,7 +30,7 @@ from explainer import explain_rcexplainer
 # from explainer import explain_rcnoiseexplainer
 # from explainer import explain_rcadversarialexplainer
 # from explainer import explain_boundary_inverse
-# from explainer import explain_pgmexplainer
+from explainer import explain_pgmexplainer
 # from explainer import explain_attn
 # from explainer import explain_grad
 # from explainer import explain_random
