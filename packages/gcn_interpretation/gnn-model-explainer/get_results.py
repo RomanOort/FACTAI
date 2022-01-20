@@ -83,22 +83,37 @@ def load_data(path):
     return data
 
 
-def store_fid(fid, spar, seed, file):
+def store_roc(train, test, seed, file):
     seed = str(seed)
     if seed not in file:
-        file[seed] = dict()
+        file[seed] = {'train': dict(), 'test': dict()}
 
-    file[seed]['fidelity'] = fid
-    file[seed]['sparsity'] = spar
+    s_train, f_train, n_train, r_train = train
+    s_test, f_test, n_test, r_test = test
+
+    file[seed]['train']['noise_level'] = n_train
+    file[seed]['test']['noise_level'] = n_test
+    file[seed]['train']['roc_auc'] = r_train
+    file[seed]['test']['roc_auc'] = r_test
 
 
-def store_auc(noise, auc, seed, file):
+def store_fidelity(train, test, seed, file):
     seed = str(seed)
     if seed not in file:
-        file[seed] = dict()
+        file[seed] = {'train': dict(), 'test': dict()}
 
-    file[seed]['noise_level'] = noise
-    file[seed]['roc_auc'] = auc
+    s_train, f_train, n_train, r_train = train
+    s_test, f_test, n_test, r_test = test
+
+    file[seed]['train']['fidelity'] = f_train
+    file[seed]['test']['fidelity'] = f_test
+    file[seed]['train']['sparsity'] = s_train
+    file[seed]['test']['sparsity'] = s_test
+
+
+def store_results(train, test, seed, file_fid, file_roc):
+    store_fidelity(train, test, seed, file_fid)
+    store_roc(train, test, seed, file_roc)
 
 
 if __name__ == "__main__":
@@ -126,8 +141,7 @@ if __name__ == "__main__":
         train, test = main(args)
 
         # fix me
-        store_fid(fidelity, sparsity, seed, fidelity_res)
-        store_auc(noise_level, roc_auc, seed, roc_auc_res)
+        store_results(train, test, seed, fidelity_res, roc_auc_res)
 
     save_data(fidelity_res, results_dir + fidelity_path)
     save_data(roc_auc_res, results_dir + roc_path)

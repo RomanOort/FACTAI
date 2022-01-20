@@ -1941,7 +1941,8 @@ class ExplainerRCExplainer(explain.Explainer):
 
             if self.args.eval:
                 train = self.eval_graphs_2(args, graph_indices, explainer)
-
+                test = self.eval_graphs_2(args, test_graph_indices, explainer)
+                return train, test, [], []
 
         if self.args.bmname == "synthetic" or self.args.bmname == "old_synthetic":
 
@@ -2400,11 +2401,11 @@ class ExplainerRCExplainer(explain.Explainer):
         # print("Incorrect preds: ", incorrect_preds)
         # torch.save(explainer.state_dict(), 'synthetic_data_3label_3sublabel_pgexplainer' + '.pth.tar')
         myfile.close()
-        if test_graph_indices is not None:
-            print("EVALUATING")
-            test = self.eval_graphs_2(args, test_graph_indices, explainer)
+        # if test_graph_indices is not None:
+        #     print("EVALUATING")
+            # test = self.eval_graphs_2(args, test_graph_indices, explainer)
 
-        return train, test, [], []
+        return [], [], [], []
 
 class ExplainModule(nn.Module):
     def __init__(
