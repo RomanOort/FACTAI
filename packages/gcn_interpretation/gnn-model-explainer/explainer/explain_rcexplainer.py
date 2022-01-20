@@ -1008,8 +1008,12 @@ class ExplainerRCExplainer(explain.Explainer):
         # self.adj[graph_idx, rand_order, :] = self.adj[graph_idx, order, :]
         # self.adj[graph_idx, :, rand_order] = self.adj[graph_idx, :, order]
         stats = accuracy_utils.Stats("PGExplainer_Boundary", self, self.model)
+
+        execution_times = []
         from tqdm import tqdm
+
         for graph_idx in tqdm(graph_indices):
+            start_time = time.time()
             with torch.no_grad():
                 # print("doing for graph index: ", graph_idx)
 
@@ -1073,6 +1077,11 @@ class ExplainerRCExplainer(explain.Explainer):
                 pred, masked_adj, _, _, inv_pred = explainer((x[0], emb[0], adj[0], tmp, label, sub_nodes),
                                                              training=False)
                 # explainer.loss(pred, pred_label)
+
+                end_time = time.time()
+
+                duration = end_time - start_time
+                execution_times.append(duration)
 
 
                 pred_try, _ = self.model(x.cuda(), adj.cuda(), batch_num_nodes=[sub_nodes.cpu().numpy()])
@@ -1398,6 +1407,11 @@ class ExplainerRCExplainer(explain.Explainer):
         print("FIDELITY", fidelity)
         print("NOISE VALS", noise_values)
         print("ROC AUC", ROC_AUC)
+
+        print("=========")
+        avg_time = np.mean(execution_times)
+        avg_time_std = np.std(execution_times)
+        print("Average execution time (in seconds)", avg_time, "std:", avg_time_std)
         return sparsity, fidelity, noise_values, ROC_AUC
 
 
@@ -1964,7 +1978,9 @@ class ExplainerRCExplainer(explain.Explainer):
         elif self.args.bmname == "BA_2Motifs":
             size = 700
         elif self.args.bmname == "MNIST":
-            size = 3000
+            size = 38500
+        elif self.args.bmname == "MNISTSuperpixels":
+            size = 1001
         else:
             print(self.args.bmname + " not found!")
             assert (False)

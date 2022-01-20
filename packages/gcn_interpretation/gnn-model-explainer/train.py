@@ -74,7 +74,8 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     w_lbl = 0
     print("Train data:")
     for batch_idx, data in tqdm.tqdm(enumerate(train_loader)):
-
+        if batch_idx > 1000:
+            break
         feats = data.x
         if (data.edge_index.shape[1] == 0):
             continue
@@ -130,7 +131,8 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     val_num_nodes = {}
     print("Validation data:")
     for batch_idx, data in tqdm.tqdm(enumerate(val_loader)):
-
+        if batch_idx > 1000:
+            break
         feats = data.x
         if (data.edge_index.shape[1] == 0):
             continue
@@ -185,7 +187,7 @@ def extract_cg_pyg(args, model, device, train_loader, val_loader):
     all_labels_v = None
     all_preds_v = None
     all_num_nodes_v = None
-    for k in all_adjs.keys():
+    for k in tqdm.tqdm(all_adjs.keys()):
         this_feat = all_adjs[k].shape[1]
         adj = np.zeros((max_feat, max_feat))
         adj[:this_feat, :this_feat] = all_adjs[k][:this_feat, :this_feat]
@@ -2520,7 +2522,10 @@ def arg_parse():
     parser.add_argument("--batch-size-WEIRD",
                         dest="second_batch_WEIRD",
                         type=int,
-                        help="An interesting approach at a sort of batching of batches? I dont quite understand.")
+                        default=2,
+                        help="An interesting approach at a sort of batching of batches? I dont quite understand. This "
+                             "works like a subdivision, but default of 200 is a weird subdivision because that just "
+                             "hurts performance")
 
     parser.add_argument(
         "--epochs", dest="num_epochs", type=int, help="Number of epochs to train."
