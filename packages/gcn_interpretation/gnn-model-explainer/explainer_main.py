@@ -126,7 +126,7 @@ def main(config=None):
         # Explain Node prediction
         # NOTE FIXME: MODEL ABOVE IS USUALLY USED
         model = models.GcnEncoderNode(
-            input_dim=input_dim ,
+            input_dim=input_dim,
             hidden_dim=prog_args.hidden_dim,
             embedding_dim=prog_args.output_dim,
             label_dim=num_classes,
@@ -522,10 +522,7 @@ def main(config=None):
 
                 print("Train", len(train_graph_indices))
                 print("Test", len(test_graph_indices))
-                if prog_args.eval is True:
-                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
-                else:
-                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
+                train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
 
 
         elif prog_args.graph_idx == -1:
