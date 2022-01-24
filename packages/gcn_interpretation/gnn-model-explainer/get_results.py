@@ -5,6 +5,7 @@ import json
 
 
 SEEDS = [0, 1, 3, 5, 8, 10, 15, 42, 69, 101]
+SPARSITIES = [0.8, 1.0]
 
 config = {
     "logdir":"log",
@@ -40,7 +41,7 @@ config = {
     "pred_hidden_dim": 20,
     "pred_num_layers": 0,
     "bn": False,
-    "train_data_sparsity": 1.0,
+    "train_data_sparsity": 0.8,
     "draw_graphs": False,
     "inverse_noise": False,
     "gumbel": False,
@@ -83,37 +84,41 @@ def load_data(path):
     return data
 
 
-def store_roc(train, test, seed, file):
+def store_roc(train, test, seed, data_sparsity, file):
     seed = str(seed)
     if seed not in file:
-        file[seed] = {'train': dict(), 'test': dict()}
+        file[seed] = dict()
+        if data_sparsity not in file[seed]:
+            file[seed][data_sparsity] = {'train': dict(), 'test': dict()}
 
     s_train, f_train, n_train, r_train = train
     s_test, f_test, n_test, r_test = test
 
-    file[seed]['train']['noise_level'] = n_train
-    file[seed]['test']['noise_level'] = n_test
-    file[seed]['train']['roc_auc'] = r_train
-    file[seed]['test']['roc_auc'] = r_test
+    file[seed][data_sparsity]['train']['noise_level'] = n_train
+    file[seed][data_sparsity]['test']['noise_level'] = n_test
+    file[seed][data_sparsity]['train']['roc_auc'] = r_train
+    file[seed][data_sparsity]['test']['roc_auc'] = r_test
 
 
-def store_fidelity(train, test, seed, file):
+def store_fidelity(train, test, seed, data_sparsity, file):
     seed = str(seed)
     if seed not in file:
-        file[seed] = {'train': dict(), 'test': dict()}
+        file[seed] = dict()
+        if data_sparsity not in file[seed]:
+            file[seed][data_sparsity] = {'train': dict(), 'test': dict()}
 
     s_train, f_train, n_train, r_train = train
     s_test, f_test, n_test, r_test = test
 
-    file[seed]['train']['fidelity'] = f_train
-    file[seed]['test']['fidelity'] = f_test
-    file[seed]['train']['sparsity'] = s_train
-    file[seed]['test']['sparsity'] = s_test
+    file[seed][data_sparsity]['train']['fidelity'] = f_train
+    file[seed][data_sparsity]['test']['fidelity'] = f_test
+    file[seed][data_sparsity]['train']['sparsity'] = s_train
+    file[seed][data_sparsity]['test']['sparsity'] = s_test
 
 
-def store_results(train, test, seed, file_fid, file_roc):
-    store_fidelity(train, test, seed, file_fid)
-    store_roc(train, test, seed, file_roc)
+def store_results(train, test, seed, data_sparsity, file_fid, file_roc):
+    store_fidelity(train, test, seed, data_sparsity, file_fid)
+    store_roc(train, test, seed, data_sparsity, file_roc)
 
 
 if __name__ == "__main__":
@@ -129,19 +134,20 @@ if __name__ == "__main__":
 
     for seed in SEEDS:
         print("Evaluating seed", seed)
-        if str(seed) in fidelity_res and str(seed) in roc_auc_res:
-            continue
+        for data_sparsity in SPARSITIES:
+            if str(seed) in fidelity_res and str(seed) in roc_auc_res:
+                continue
 
-        config["seed"] = seed
-        config["exp_path"] = f"ckpt/Mutagenicity/rcexp_mutag_seed_{seed}_logdir/rcexp_mutag_seed_{seed}explainer_Mutagenicity_pgeboundary.pth.tar"
-        if not os.path.exists(config["exp_path"]):
-            raise IOError("Seed file not available", config["exp_path"])
+            config["seed"] = seed
+            config["exp_path"] = f"ckpt/Mutagenicity/rcexp_mutag_seed_{seed}_logdir/rcexp_mutagexplainer_Mutagenicity_ep_600_seed_{seed}_sparsity_{data_sparsity}.pth.tar"
+            if not os.path.exists(config["exp_path"]):
+                print("Seed file not available", config["exp_path"], "Skipping.")
+                continue
 
-        args = SimpleNamespace(**config)  # Namespace from dict
-        train, test = main(args)
+            args = SimpleNamespace(**config)  # Namespace from dict
+            train, test = main(args)
 
-        # fix me
-        store_results(train, test, seed, fidelity_res, roc_auc_res)
+            store_results(train, test, seed, data_sparsity, fidelity_res, roc_auc_res)
 
     save_data(fidelity_res, results_dir + fidelity_path)
     save_data(roc_auc_res, results_dir + roc_path)

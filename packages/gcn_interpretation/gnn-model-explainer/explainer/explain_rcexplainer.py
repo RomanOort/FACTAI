@@ -904,9 +904,8 @@ class ExplainerRCExplainer(explain.Explainer):
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
                 myfile.write("\n explainer params sum: {}, model params sum: {}".format(explainer_sum, model_sum))
 
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgenoboundary.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + f"_pgenoboundary_seed_{self.args.seed}_sparsity_{self.args.data_sparsity}.pth.tar"
                 save_path = os.path.join(log_path, f_path)
-                torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))
             if epoch % 100 == 0:
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
@@ -981,7 +980,7 @@ class ExplainerRCExplainer(explain.Explainer):
         pred_removed_edges = 0.
         topk = self.args.topk
 
-        noise_iters = 5 # TODO: is dit aantal iteraties??
+        noise_iters = 1 # TODO: is dit aantal iteraties??
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
         noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
@@ -1487,7 +1486,7 @@ class ExplainerRCExplainer(explain.Explainer):
         model_sum = 0.0
         mean_auc = 0.0
 
-        noise_iters = 10
+        noise_iters = 1
         noise_range = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 1]
         noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
@@ -2033,7 +2032,7 @@ class ExplainerRCExplainer(explain.Explainer):
         #     self.feat[graph_idx, rand_order, :] = self.feat[graph_idx,order,:]
         #     self.adj[graph_idx, rand_order, :] = self.adj[graph_idx,order,:]
         #     self.adj[graph_idx, :, rand_order] = self.adj[graph_idx,:,order]
-        log_name = self.args.prefix + f"_seed_{args.seed}" + "_logdir"
+        log_name = self.args.prefix + f"_seed_{args.seed}_sparsity_{self.args.train_data_sparsity}" + "_logdir"
         log_path = os.path.join(self.args.ckptdir, log_name)
         if os.path.isdir(log_path):
             print("log dir already exists and will be overwritten")
@@ -2412,13 +2411,13 @@ class ExplainerRCExplainer(explain.Explainer):
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
                 myfile.write("\n explainer params sum: {}, model params sum: {}".format(explainer_sum, model_sum))
 
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgeboundary.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))
             if epoch % 100 == 0:
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgeboundary_ep_" + str(epoch) + ".pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_ep_" + str(epoch) + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))

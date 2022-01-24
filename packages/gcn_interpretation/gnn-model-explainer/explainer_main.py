@@ -495,38 +495,55 @@ def main(config=None):
                 prog_args.multigraph_class,
                 " : ",
             )
-            orig_graph_indices=graph_indices
+            # orig_graph_indices=graph_indices
+            # test_graph_indices = []
+            random.shuffle(graph_indices)
+
             if prog_args.explainer_method == "pgexplainer_boundary":
-                if prog_args.train_data_sparsity is not None:
-                    graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
-                explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                raise NotImplemented("Oepsie floepsie")
+                # if prog_args.train_data_sparsity is not None:
+                #     graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
+                # explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
             else:
-                if prog_args.train_data_sparsity is not None:
-                    graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
-                if prog_args.eval is True:
-                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                if prog_args.train_data_sparsity == 0.8:
+                    N = int(len(graph_indices)*prog_args.train_data_sparsity)
+                    train_graph_indices = graph_indices[:N]
+                    test_graph_indices = graph_indices[N:]
+                elif prog_args.train_data_sparsity == 1.0:
+                    train_graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
+                    test_graph_indices = train_graph_indices
                 else:
-                    explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                    raise NotImplementedError("Chose data sparsity 0.8 or "
+                                              "1.0. Got", prog_args.train_data_sparsity)
+
+                print("Train", len(train_graph_indices))
+                print("Test", len(test_graph_indices))
+                if prog_args.eval is True:
+                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
+                else:
+                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
 
 
         elif prog_args.graph_idx == -1:
-                
+            raise NotImplemented("Oepsie 1")
             
-            orig_graph_indices=range_g
-
-            if prog_args.train_data_sparsity is not None:
-                range_g = random.sample(range_g, int(len(range_g) * prog_args.train_data_sparsity))
-            explainer.explain_graphs(prog_args, graph_indices=range_g, test_graph_indices=orig_graph_indices)
+            # orig_graph_indices=range_g
+            #
+            # if prog_args.train_data_sparsity is not None:
+            #     range_g = random.sample(range_g, int(len(range_g) * prog_args.train_data_sparsity))
+            # explainer.explain_graphs(prog_args, graph_indices=range_g, test_graph_indices=orig_graph_indices)
         else:
-            explainer.explain(
-                node_idx=0,
-                graph_idx=prog_args.graph_idx,
-                graph_mode=True,
-                unconstrained=False,
-            )
-            io_utils.plot_cmap_tb(writer, "tab20", 20, "tab20_cmap")
+            raise NotImplemented("Oepsie 2")
+            # explainer.explain(
+            #     node_idx=0,
+            #     graph_idx=prog_args.graph_idx,
+            #     graph_mode=True,
+            #     unconstrained=False,
+            # )
+            # io_utils.plot_cmap_tb(writer, "tab20", 20, "tab20_cmap")
     else:
         if prog_args.multinode_class >= 0:
+            raise NotImplemented("Niet de bedoeling")
             print(cg_dict["label"])
             # only run for nodes with label specified by multinode_class
             labels = cg_dict["label"][0]  # already numpy matrix
@@ -614,8 +631,8 @@ def main(config=None):
             # masked_adj = explainer.explain_nodes_gnn_stats(
             #     range(400, 450, 1), prog_args
             # )
-
     return train, test
+
 
 if __name__ == "__main__":
     print(main())
