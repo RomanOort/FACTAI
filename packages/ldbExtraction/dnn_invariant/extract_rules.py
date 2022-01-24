@@ -44,6 +44,16 @@ import tqdm
 BASE_DIRECTORY = "/home/fisher/GCN-Group-interpretation/ai-adversarial-detection/dnn_invariant"
 
 def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=None, graph_indices=None, pool_size=50):
+    from os import path
+    pickle_path = "./data/rule_dict_MNISTSuperpixel.pickle"
+
+    if path.exists(pickle_path):
+        print("NOTE: Rules already extracted")
+        print("Using file", pickle_path)
+        rule_dict_save = pickle.load(open(pickle_path, 'rb'))
+        return rule_dict_save
+    else:
+        print("No rule file found, extracting a new one.")
 
     #===================   Parameter settings Start   ========================
 
@@ -245,6 +255,7 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
         is_graph_classification = True
 
 
+
     elif dataset_name == 'PROTEINS':
         num_classes = 2
         model = GcnEncoderGraph(
@@ -409,12 +420,14 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     elif dataset_name == "MNISTSuperpixels":
         num_classes = 10
         model = GcnEncoderGraph(
-            1, # input_dim?????
-            20,
-            20,
-            num_classes,
-            args.num_gc_layers,
-            pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
+            input_dim=1,
+            hidden_dim=args.hidden_dim,
+            embedding_dim=args.output_dim,
+            label_dim=num_classes,
+            num_layers=args.num_gc_layers,
+            # pred_hidden_dims=[args.pred_hidden_dim] * args.pred_num_layers,
+            # Hardcode to match train.py
+            pred_hidden_dims=[20, 10],
             bn=False,
             dropout=0.0,
             args=None,
@@ -799,7 +812,6 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
 
     # print("total seed images: ", len(indices))
 
-    import pickle
     # all_data = pickle.load(open("/home/mohit/Mohit/gcn_interpretation/data/synthetic_data_2label_3sublabel/synthetic_data.p", "rb"))
     # sublabel_nodes_array = all_data['sub_label_nodes']
     # sublabel_array = all_data['sub_label']
@@ -972,5 +984,7 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     rule_dict_save['rules'] = rule_dict_list
     rule_dict_save['idx2rule'] = idx2rule
     # pickle.dump(rule_dict_save, open("./data/synthetic/rule_dict_synthetic_train_4k8000_comb_12dlbls_nofake.p","wb"))
-    #pickle.dump(rule_dict_save, open("./data/rule_dict_syn2_train_all_dense.p","wb"))
+
+    print("Stored rules dict to:", pickle_path)
+    pickle.dump(rule_dict_save, open(pickle_path,"wb"))
     return rule_dict_save

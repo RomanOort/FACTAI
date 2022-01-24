@@ -100,6 +100,7 @@ def main(config=None):
     # build model
     print("Method: ", prog_args.method)
     if graph_mode:
+
         # Explain Graph prediction
         model = models.GcnEncoderGraph(
             input_dim=input_dim,
@@ -107,7 +108,9 @@ def main(config=None):
             embedding_dim=prog_args.output_dim,
             label_dim=num_classes,
             num_layers=prog_args.num_gc_layers,
-            pred_hidden_dims=[prog_args.pred_hidden_dim] * prog_args.pred_num_layers,
+            # pred_hidden_dims=[prog_args.pred_hidden_dim] * prog_args.pred_num_layers,
+            # Hardcode to match train.py
+            pred_hidden_dims=[20, 10],
             bn=prog_args.bn,
             args=prog_args,
             device=device
@@ -117,8 +120,9 @@ def main(config=None):
             # class weight in CE loss for handling imbalanced label classes
             prog_args.loss_weight = torch.tensor([1.0, 5.0], dtype=torch.float).cuda() 
         # Explain Node prediction
+        # NOTE FIXME: MODEL ABOVE IS USUALLY USED
         model = models.GcnEncoderNode(
-            input_dim=input_dim,
+            input_dim=input_dim ,
             hidden_dim=prog_args.hidden_dim,
             embedding_dim=prog_args.output_dim,
             label_dim=num_classes,
@@ -132,10 +136,19 @@ def main(config=None):
     model = model.to(device)
 
     # load state_dict (obtained by model.state_dict() when saving checkpoint)
+    print("===== checkpoint")
+    for k,v in ckpt["model_state"].items():
+        print(k, v.shape)
 
-    # print(ckpt["model_state"])
+    print("===== model")
+    for k,v in model.state_dict().items():
+        print(k, v.shape)
     # print(model.state_dict())
+    s = model.conv_first.weight.shape
+    print("model.conv_first.weight.shape", s)
     model.load_state_dict(ckpt["model_state"])
+
+    print("---DONE")
 
 
 
