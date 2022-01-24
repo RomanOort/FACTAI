@@ -505,14 +505,19 @@ def main(config=None):
                 #     graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
                 # explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
             else:
-                if prog_args.train_data_sparsity is not None:
+                if prog_args.train_data_sparsity == 0.8:
                     N = int(len(graph_indices)*prog_args.train_data_sparsity)
                     train_graph_indices = graph_indices[:N]
                     test_graph_indices = graph_indices[N:]
+                elif prog_args.train_data_sparsity == 1.0:
+                    train_graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
+                    test_graph_indices = train_graph_indices
+                else:
+                    raise NotImplementedError("Chose data sparsity 0.8 or "
+                                              "1.0. Got", prog_args.train_data_sparsity)
 
-                    print("Train", len(train_graph_indices))
-                    print("Test", len(test_graph_indices))
-                    # graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
+                print("Train", len(train_graph_indices))
+                print("Test", len(test_graph_indices))
                 if prog_args.eval is True:
                     train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
                 else:
@@ -626,8 +631,8 @@ def main(config=None):
             # masked_adj = explainer.explain_nodes_gnn_stats(
             #     range(400, 450, 1), prog_args
             # )
-
     return train, test
+
 
 if __name__ == "__main__":
     print(main())
