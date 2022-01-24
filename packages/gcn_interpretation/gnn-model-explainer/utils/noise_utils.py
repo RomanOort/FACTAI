@@ -180,6 +180,7 @@ class NoiseHandler(object):
 
             threshold = sorted(zip(gt.row, gt.col, gt.data), key = lambda x: x[2], reverse=True)[topk * 2][2]
             # print("THRESHOLD", threshold)
+
             gt_edges = masked_adj >= threshold
 
             # AUC_ind = accuracy_utils.AUC()

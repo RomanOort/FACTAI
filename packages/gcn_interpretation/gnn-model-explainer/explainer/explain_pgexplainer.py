@@ -461,7 +461,7 @@ class ExplainerPGExplainer(explain.Explainer):
         
 
         # noise stats
-        noise_iters = 1
+        noise_iters = 5
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
         noise_handlers = [noise_utils.NoiseHandler("PGExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
@@ -560,7 +560,8 @@ class ExplainerPGExplainer(explain.Explainer):
             
             thresh_nodes = 15
             imp_nodes = explain.getImportantNodes(masked_adj, 8)
-            stats.update(masked_adj, imp_nodes, graph_idx)
+            stats.update(masked_adj, imp_nodes, adj, x, label, sub_nodes)
+            # stats.update(masked_adj, imp_nodes, graph_idx)
             label = self.label[graph_idx]
             
             if self.args.noise:
@@ -714,8 +715,8 @@ class ExplainerPGExplainer(explain.Explainer):
         ep_count = 0.
         loss_ep = 0.
 
-
-        for epoch in range(self.args.num_epochs):
+        from tqdm import tqdm
+        for epoch in tqdm(range(self.args.num_epochs)):
             masked_adjs = []
             rule_top4_acc = 0.
             rule_top6_acc = 0.
@@ -740,7 +741,7 @@ class ExplainerPGExplainer(explain.Explainer):
                 loss_ep = 0.
             logging_graphs=False
             AUC = accuracy_utils.AUC()
-            stats = accuracy_utils.Stats("PGExplainer", self)
+            stats = accuracy_utils.Stats("PGExplainer", self, self.model)
 
 
 
@@ -784,7 +785,7 @@ class ExplainerPGExplainer(explain.Explainer):
 
                 adj   = torch.tensor(sub_adj, dtype=torch.float)
                 x     = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-                label = torch.tensor(sub_label, dtype=torch.long)
+                label = sub_label.clone().detach()
                 emb = self.model.getEmbeddings(x, adj, batch_num_nodes=[sub_nodes.cpu().numpy()])
 
                 pred_label = np.argmax(self.pred[0][graph_idx], axis=0)
@@ -861,7 +862,7 @@ class ExplainerPGExplainer(explain.Explainer):
 
                 thresh_nodes = 15
                 imp_nodes = explain.getImportantNodes(masked_adj, 8)
-                stats.update(masked_adj, imp_nodes, graph_idx)
+                stats.update(masked_adj, imp_nodes, adj, x, label, sub_nodes)
 
 
                 if self.args.bmname == 'synthetic' or self.args.bmname == 'old_synthetic':

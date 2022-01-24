@@ -20,8 +20,8 @@ import utils.io_utils as io_utils
 # from explainer import explain_boundary_nn as explain
 
 # from explainer import explain_boundary_joint
-# from explainer import explain_gnnexplainer
-# from explainer import explain_pgexplainer# _node as explain_pgexplainer
+from explainer import explain_gnnexplainer
+from explainer import explain_pgexplainer# _node as explain_pgexplainer
 # from explainer import explain_twopgexplainer# _node as explain_pgexplainer
 # from explainer import explain_pgexplainer_node
 # from explainer import explain_rcexplainer_noldb
@@ -30,7 +30,7 @@ from explainer import explain_rcexplainer
 # from explainer import explain_rcnoiseexplainer
 # from explainer import explain_rcadversarialexplainer
 # from explainer import explain_boundary_inverse
-# from explainer import explain_pgmexplainer
+from explainer import explain_pgmexplainer
 # from explainer import explain_attn
 # from explainer import explain_grad
 # from explainer import explain_random
@@ -504,7 +504,7 @@ def main(config=None):
                 if prog_args.train_data_sparsity is not None:
                     graph_indices = random.sample(graph_indices, int(len(graph_indices) * prog_args.train_data_sparsity))
                 if prog_args.eval is True:
-                    sparsity, fidelity, noise_level, roc_auc = explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
+                    train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
                 else:
                     explainer.explain_graphs(prog_args, graph_indices=graph_indices, test_graph_indices=orig_graph_indices)
 
@@ -615,7 +615,7 @@ def main(config=None):
             #     range(400, 450, 1), prog_args
             # )
 
-    return sparsity, fidelity, noise_level, roc_auc
+    return train, test
 
 if __name__ == "__main__":
     print(main())
