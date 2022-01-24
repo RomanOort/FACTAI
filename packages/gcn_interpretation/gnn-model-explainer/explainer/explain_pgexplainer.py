@@ -461,7 +461,7 @@ class ExplainerPGExplainer(explain.Explainer):
         
 
         # noise stats
-        noise_iters = 5
+        noise_iters = 5 # todo: 5 or 1?
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
         noise_handlers = [noise_utils.NoiseHandler("PGExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
@@ -597,18 +597,28 @@ class ExplainerPGExplainer(explain.Explainer):
         # )
         # myfile.write("\n Average rule accuracy: {}".format(rule_label_match / acc_count))
         print(stats)
+        ROC_AUC, noise_values = [], []
+        
         if self.args.noise:
             for nh in noise_handlers:
                 print(nh)
             print("SUMMARY")
             for nh in noise_handlers:
                 print(nh.summary())
+                ROC_AUC.append(nh.AUC.getAUC())
+                noise_values.append(nh.noise_percent)
         
         print("FIDELITY SUMMARY")
         print(stats.summary())
         myfile.close()
+        
+        sparsity, fidelity = stats.get_sparsity_fidelity()
+        print("SPARSITY", sparsity)
+        print("FIDELITY", fidelity)
+        print("NOISE VALS", noise_values)
+        print("ROC AUC", ROC_AUC)
 
-
+        return sparsity, fidelity, noise_values, ROC_AUC
 
 
     # GRAPH EXPLAINER
@@ -657,8 +667,13 @@ class ExplainerPGExplainer(explain.Explainer):
             explainer.load_state_dict(exp_state_dict)
             # load state_dict from file
 
-            self.eval_graphs(args, graph_indices, explainer, self.model)
-            exit()
+            if self.args.eval:
+                train = self.eval_graphs(args, graph_indices, explainer, self.model)
+                test = self.eval_graphs(args, test_graph_indices, explainer, self.model)
+                return train, test, [], []
+            
+            # self.eval_graphs(args, graph_indices, explainer, self.model)
+            # exit()
 
         params_optim = []
         for name, param in explainer.named_parameters():
@@ -1008,10 +1023,12 @@ class ExplainerPGExplainer(explain.Explainer):
         print("Flips: ", flips)
         print("Incorrect preds: ", incorrect_preds)
         # torch.save(explainer.state_dict(), 'synthetic_data_3label_3sublabel_pgexplainer' + '.pth.tar')
-        if test_graph_indices is not None:
-            print("EVALUATING")
-            self.eval_graphs(args, test_graph_indices, explainer, self.model)
-        return masked_adjs
+        # if test_graph_indices is not None:
+            # print("EVALUATING")
+            # self.eval_graphs(args, test_graph_indices, explainer, self.model)
+            
+        # return masked_adjs
+        return [], [], [], []
 
 class ExplainModule(nn.Module):
     def __init__(
