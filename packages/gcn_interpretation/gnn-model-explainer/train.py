@@ -2560,12 +2560,21 @@ def arg_parse():
         "--num-classes", dest="num_classes", type=int, help="Number of label classes"
     )
     parser.add_argument(
-        "--pred-hidden-dims",
-        dest="pred_hidden_dims",
-        type=list,
-        help="Dims of the fully connected layers",
-        default=list()
+        "--pred-hidden-dim",
+        dest="pred_hidden_dim",
+        type=int,
+        help="hidden dims",
+        default=20
     )
+
+    parser.add_argument(
+        "--pred-num-layers",
+        dest="pred_num_layers",
+        type=int,
+        help="num layers",
+        default=0
+    )
+
     parser.add_argument(
         "--num-gc-layers",
         dest="num_gc_layers",
