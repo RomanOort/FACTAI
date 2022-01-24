@@ -2019,7 +2019,7 @@ class ExplainerRCExplainer(explain.Explainer):
         #     self.feat[graph_idx, rand_order, :] = self.feat[graph_idx,order,:]
         #     self.adj[graph_idx, rand_order, :] = self.adj[graph_idx,order,:]
         #     self.adj[graph_idx, :, rand_order] = self.adj[graph_idx,:,order]
-        log_name = self.args.prefix + f"_seed_{args.seed}" + "_logdir"
+        log_name = self.args.prefix + f"_seed_{args.seed}_sparsity_{self.args.train_data_sparsity}" + "_logdir"
         log_path = os.path.join(self.args.ckptdir, log_name)
         if os.path.isdir(log_path):
             print("log dir already exists and will be overwritten")
@@ -2380,13 +2380,13 @@ class ExplainerRCExplainer(explain.Explainer):
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
                 myfile.write("\n explainer params sum: {}, model params sum: {}".format(explainer_sum, model_sum))
 
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + f"_seed_{self.args.seed}_sparsity_{self.args.data_sparsity}.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))
             if epoch % 100 == 0:
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_ep_" + str(epoch) + f"_seed_{self.args.seed}_sparsity_{self.args.data_sparsity}.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_ep_" + str(epoch) + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))
