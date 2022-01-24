@@ -986,6 +986,10 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     # pickle.dump(rule_dict_save, open("./data/synthetic/rule_dict_synthetic_train_4k8000_comb_12dlbls_nofake.p","wb"))
 
     if dataset_name == "MNISTSuperpixels":
+        try:
+            os.mkdir("data")
+        except FileExistsError as e:
+            pass
         print("Stored rules dict to:", pickle_path)
         pickle.dump(rule_dict_save, open(pickle_path,"wb"))
     return rule_dict_save
