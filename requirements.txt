@@ -8,3 +8,12 @@ tensorboardX
 jupyter
 tqdm
 wandb
+torchvision
+torch
+seaborn
+dill
+seaborn
+torch
+torchvision
+dill
+pgmpy==0.1.11
