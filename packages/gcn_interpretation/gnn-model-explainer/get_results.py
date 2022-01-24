@@ -40,7 +40,7 @@ config = {
     "pred_hidden_dim": 20,
     "pred_num_layers": 0,
     "bn": False,
-    "train_data_sparsity": 1.0,
+    "train_data_sparsity": 0.8,
     "draw_graphs": False,
     "inverse_noise": False,
     "gumbel": False,
@@ -133,9 +133,10 @@ if __name__ == "__main__":
             continue
 
         config["seed"] = seed
-        config["exp_path"] = f"ckpt/Mutagenicity/rcexp_mutag_seed_{seed}_logdir/rcexp_mutag_seed_{seed}explainer_Mutagenicity_pgeboundary.pth.tar"
+        config["exp_path"] = f"ckpt/Mutagenicity/rcexp_mutag_seed_{seed}_logdir/rcexp_mutagexplainer_Mutagenicity_pgeboundary.pth.tar"
         if not os.path.exists(config["exp_path"]):
-            raise IOError("Seed file not available", config["exp_path"])
+            print("Seed file not available", config["exp_path"], "Skipping.")
+            continue
 
         args = SimpleNamespace(**config)  # Namespace from dict
         train, test = main(args)
