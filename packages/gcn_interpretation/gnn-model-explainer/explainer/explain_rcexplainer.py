@@ -11,6 +11,8 @@ import os
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import tqdm
+import wandb
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -1905,18 +1907,28 @@ class ExplainerRCExplainer(explain.Explainer):
 
         graph_indices = list(graph_indices)
 
+        if self.args.bmname == "MNISTSuperpixels":
 
+            if self.emb is not None:
+                assert(self.model.embedding_dim * self.model.num_layers * 2 == self.emb[0, :].shape[1] * 2)
+            explainer = ExplainModule(
+                model = self.model,
+                num_nodes = self.adj.shape[1],
+                emb_dims = 460, # Note: Hardcoded because we dont understand the origin
+                device=self.device,
+                args = self.args
+            )
 
-
-        # if self.emb is not None:
-            # assert(self.model.embedding_dim * self.model.num_layers * 2 == self.emb[0, :].shape[1] * 2)
-        explainer = ExplainModule(
-            model = self.model, 
-            num_nodes = self.adj.shape[1],
-            emb_dims = self.model.embedding_dim * self.model.num_layers * 2, # TODO: fixme!
-            device=self.device,
-            args = self.args
-        )
+        else:
+            if self.emb is not None:
+                assert (self.model.embedding_dim * self.model.num_layers * 2 == self.emb[0, :].shape[1] * 2)
+            explainer = ExplainModule(
+                model=self.model,
+                num_nodes=self.adj.shape[1],
+                emb_dims = self.model.embedding_dim * self.model.num_layers * 2, # TODO: fixme!
+                device=self.device,
+                args=self.args
+            )
 
         if self.args.bmname == "synthetic" or self.args.bmname == "old_synthetic":
             load_sublabel_nodes(self.args)
@@ -1981,7 +1993,8 @@ class ExplainerRCExplainer(explain.Explainer):
         elif self.args.bmname == "MNIST":
             size = 38500
         elif self.args.bmname == "MNISTSuperpixels":
-            size = 1001
+            size = 42000
+            print("Dataset bundeled with model: self.adj.shape", self.adj.shape)
         else:
             print(self.args.bmname + " not found!")
             assert (False)
@@ -2047,10 +2060,18 @@ class ExplainerRCExplainer(explain.Explainer):
         myfile.close()
         bloss_prev = None
 
+        NOTES = "baseline"
+        run = wandb.init(project="fact-ai-explainer", entity="thomas-w",
+                         config=vars(self.args),
+                         group=self.args.bmname,
+                         notes=f"{NOTES}", )
+        run.name = f"rcexplainer_{run.name}"
+
         ep_count = 0.
         loss_ep = 0.
 
-        for epoch in range(self.args.start_epoch, self.args.num_epochs):
+        print("Training")
+        for epoch in tqdm.tqdm(range(self.args.start_epoch, self.args.num_epochs)):
             myfile = open(log_file_path, "a")
             loss = 0
             logging_graphs=False
@@ -2156,8 +2177,6 @@ class ExplainerRCExplainer(explain.Explainer):
                         boundary = boundary.cuda()
                     boundary_label = rule['boundary'][b_num]['label']
                     boundary_list.append(boundary)
-
-
 
                 pred, masked_adj, graph_embedding, inv_embedding, inv_pred = explainer((x[0], emb[0], adj[0], tmp, label, sub_nodes), training=training)
                 # if pred is not None:
@@ -2279,6 +2298,18 @@ class ExplainerRCExplainer(explain.Explainer):
                     "; loss: ",
                     loss.item(),
                 )
+
+            lr = [group['lr'] for group in optimizer.param_groups][0]
+
+            run.log({
+                "epoch": epoch,
+                "loss_ep": loss_ep,
+                "loss": loss.item(),
+                "rule_top4_acc": rule_top4_acc/rule_acc_count,
+                "rule_top6_acc": rule_top6_acc/rule_acc_count,
+                "rule_top8_acc": rule_top8_acc/rule_acc_count,
+                "lr": lr,
+            })
 
 
             myfile.write("\n epoch: {}, loss: {}".format(epoch, loss.item()))
@@ -2546,6 +2577,8 @@ class ExplainModule(nn.Module):
 
             h = torch.cat([f1, f2], dim=-1)
 
+
+        # TODO WIGGERS: use the nn.sequential
         h = h.to(self.device)
         for elayer in self.elayers:
             h = elayer(h)
@@ -2695,6 +2728,12 @@ class ExplainModule(nn.Module):
             pred: prediction made by current model
             pred_label: the label predicted by the original model.
         """
+        #  Why was this hardcoded in the original?
+        if self.args.bmname == "MNISTSuperpixels":
+            OUTPUT_DIM = self.args.output_dim
+        else:
+            OUTPUT_DIM = 20
+
         pred_loss = torch.zeros(1).cuda()
         if pred is not None:
             if node_idx is not None:
@@ -2722,8 +2761,8 @@ class ExplainModule(nn.Module):
                 boundary_loss = 0.
                 sigma = 1.0
                 for boundary in boundary_list:
-                    gt_proj = torch.sum(gt_embedding * boundary[:20]) + boundary[20]
-                    ft_proj = torch.sum(graph_embedding * boundary[:20]) + boundary[20]
+                    gt_proj = torch.sum(gt_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
+                    ft_proj = torch.sum(graph_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
                     boundary_loss += torch.nn.functional.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
                 boundary_loss = self.args.boundary_c * (boundary_loss / len(boundary_list))
 
@@ -2734,8 +2773,8 @@ class ExplainModule(nn.Module):
                 inv_losses = []
                 for boundary in boundary_list:
 
-                    gt_proj = torch.sum(gt_embedding * boundary[:20]) + boundary[20]
-                    inv_proj = torch.sum(inv_embedding * boundary[:20]) + boundary[20]
+                    gt_proj = torch.sum(gt_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
+                    inv_proj = torch.sum(inv_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
                     # print("inv: ", gt_proj, inv_proj)
                     inv_loss = torch.nn.functional.sigmoid(sigma * (gt_proj * inv_proj))
                     inv_losses.append(inv_loss)
