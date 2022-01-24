@@ -101,6 +101,12 @@ def main(config=None):
     print("Method: ", prog_args.method)
     if graph_mode:
 
+        pred_hidden_dims = [prog_args.pred_hidden_dim] * prog_args.pred_num_layers
+
+        if prog_args.bmname == "MNISTSuperpixels":
+            # Hardcode to match train.py
+            pred_hidden_dims = [20, 10]
+
         # Explain Graph prediction
         model = models.GcnEncoderGraph(
             input_dim=input_dim,
@@ -108,9 +114,7 @@ def main(config=None):
             embedding_dim=prog_args.output_dim,
             label_dim=num_classes,
             num_layers=prog_args.num_gc_layers,
-            pred_hidden_dims=[prog_args.pred_hidden_dim] * prog_args.pred_num_layers,
-            # Hardcode to match train.py
-            # pred_hidden_dims=[20, 10],
+            pred_hidden_dims=pred_hidden_dims,
             bn=prog_args.bn,
             args=prog_args,
             device=device
