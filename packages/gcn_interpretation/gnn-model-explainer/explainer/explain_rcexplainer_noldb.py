@@ -1365,6 +1365,8 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
 
         print(stats)
         myfile.write(str(stats))
+        ROC_AUC, noise_values = [], []
+        
         if self.args.noise:
             for nh in noise_handlers:
                 print(nh)
@@ -1372,13 +1374,20 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
             print("NOISE SUMMARY")
             for nh in noise_handlers:
                 print(nh.summary())
+                ROC_AUC.append(nh.AUC.getAUC())
+                noise_values.append(nh.noise_percent)
 
         print("SUMMARY")
         print(stats.summary())
         myfile.close()
 
+        sparsity, fidelity = stats.get_sparsity_fidelity()
+        print("SPARSITY", sparsity)
+        print("FIDELITY", fidelity)
+        print("NOISE VALS", noise_values)
+        print("ROC AUC", ROC_AUC)
 
-
+        return sparsity, fidelity, noise_values, ROC_AUC
 
 
     def eval_graphs(self, args, graph_indices, explainer):
@@ -1900,9 +1909,9 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
 
 
             if self.args.eval:
-                self.eval_graphs_2(args, graph_indices, explainer)
-                exit()
-
+                train = self.eval_graphs_2(args, graph_indices, explainer)
+                test = self.eval_graphs_2(args, test_graph_indices, explainer)
+                return train, test, [], []
 
 
         if self.args.bmname == "synthetic" or self.args.bmname == "old_synthetic":
@@ -1977,7 +1986,10 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
         #     self.feat[graph_idx, rand_order, :] = self.feat[graph_idx,order,:]
         #     self.adj[graph_idx, rand_order, :] = self.adj[graph_idx,order,:]
         #     self.adj[graph_idx, :, rand_order] = self.adj[graph_idx,:,order]
-        log_name = self.args.prefix + "_logdir"
+        # log_name = self.args.prefix + "_logdir"
+        log_name = self.args.prefix + f"_seed_{args.seed}_sparsity_{self.args.train_data_sparsity}" + "_logdir"
+        
+        
         log_path = os.path.join(self.args.ckptdir, log_name)
         if os.path.isdir(log_path):
             print("log dir already exists and will be overwritten")
@@ -2332,13 +2344,18 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
                 myfile.write("\n explainer params sum: {}, model params sum: {}".format(explainer_sum, model_sum))
 
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgeboundary.pth.tar"
+                # f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgeboundary.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
+                
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))
             if epoch % 100 == 0:
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgeboundary_ep_" + str(epoch) + ".pth.tar"
+                # f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgeboundary_ep_" + str(epoch) + ".pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_ep_" + str(epoch) + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
+                
+                
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
                 myfile.write("\n ckpt saved at {}".format(save_path))
@@ -2352,10 +2369,11 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
         # print("Incorrect preds: ", incorrect_preds)
         # torch.save(explainer.state_dict(), 'synthetic_data_3label_3sublabel_pgexplainer' + '.pth.tar')
         myfile.close()
-        if test_graph_indices is not None:
-            print("EVALUATING")
-            self.eval_graphs_2(args, test_graph_indices, explainer)
-        return masked_adjs
+        # if test_graph_indices is not None:
+            # print("EVALUATING")
+            # self.eval_graphs_2(args, test_graph_indices, explainer)
+            
+        return [], [], [], []
 
 class ExplainModule(nn.Module):
     def __init__(
