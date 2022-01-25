@@ -6,6 +6,8 @@ import json
 
 SEEDS = [0, 1, 3, 5, 8, 10, 15, 42, 69, 101]
 SPARSITIES = [0.8, 1.0]
+MODELS = ["rcexp", "rcexp_noldb", "pgexplainer"]
+
 
 config = {
     "logdir":"log",
@@ -84,70 +86,86 @@ def load_data(path):
     return data
 
 
-def store_roc(train, test, seed, data_sparsity, file):
-    seed = str(seed)
+def store_roc(train, test, seed: str, file):
     if seed not in file:
-        file[seed] = dict()
-        if data_sparsity not in file[seed]:
-            file[seed][data_sparsity] = {'train': dict(), 'test': dict()}
+        file[seed] = {'train': dict(), 'test': dict()}
 
     s_train, f_train, n_train, r_train = train
     s_test, f_test, n_test, r_test = test
 
-    file[seed][data_sparsity]['train']['noise_level'] = n_train
-    file[seed][data_sparsity]['test']['noise_level'] = n_test
-    file[seed][data_sparsity]['train']['roc_auc'] = r_train
-    file[seed][data_sparsity]['test']['roc_auc'] = r_test
+    file[seed]['train']['noise_level'] = n_train
+    file[seed]['test']['noise_level'] = n_test
+    file[seed]['train']['roc_auc'] = r_train
+    file[seed]['test']['roc_auc'] = r_test
 
 
-def store_fidelity(train, test, seed, data_sparsity, file):
-    seed = str(seed)
+def store_fidelity(train, test, seed: str, file):
     if seed not in file:
-        file[seed] = dict()
-        if data_sparsity not in file[seed]:
-            file[seed][data_sparsity] = {'train': dict(), 'test': dict()}
+        file[seed] = {'train': dict(), 'test': dict()}
 
     s_train, f_train, n_train, r_train = train
     s_test, f_test, n_test, r_test = test
 
-    file[seed][data_sparsity]['train']['fidelity'] = f_train
-    file[seed][data_sparsity]['test']['fidelity'] = f_test
-    file[seed][data_sparsity]['train']['sparsity'] = s_train
-    file[seed][data_sparsity]['test']['sparsity'] = s_test
+    file[seed]['train']['fidelity'] = f_train
+    file[seed]['test']['fidelity'] = f_test
+    file[seed]['train']['sparsity'] = s_train
+    file[seed]['test']['sparsity'] = s_test
 
 
-def store_results(train, test, seed, data_sparsity, file_fid, file_roc):
-    store_fidelity(train, test, seed, data_sparsity, file_fid)
-    store_roc(train, test, seed, data_sparsity, file_roc)
+def get_file_name(model: str, seed: str, sparsity: str, dataset='mutag'):
+    path = f"saved_models/{model}_{dataset}_seed_{seed}_sparsity" \
+           f"_{sparsity}_logdir/{model}_mutagexplainer_Mutagenicity_ep_600_seed_" \
+           f"{seed}_sparsity_{sparsity}.pth.tar"
+    return path
+
+
+def get_train_test_results(model, seed, sparsity):
+    f_path = get_file_name(model, seed, sparsity)
+    if not os.path.isfile(f_path):
+        print("Skipping", model, "with seed", seed, "and sparsity", sparsity)
+        print("Cannot find model in", f_path)
+        return None, None
+
+    config["seed"] = int(seed)
+    config["exp_path"] = f_path
+    config["train_data_sparsity"] = float(sparsity)
+
+    args = SimpleNamespace(**config)  # Namespace from dict
+    train, test = main(args)
+
+    return train, test
 
 
 if __name__ == "__main__":
     results_dir = "results/"
-    fidelity_path = "fidelity.json"
-    roc_path = "roc_auc.json"
 
     # Create results folder
     os.makedirs(results_dir, exist_ok=True)
 
-    fidelity_res = load_data(results_dir + fidelity_path)
-    roc_auc_res = load_data(results_dir + roc_path)
+    for model in MODELS:
+        print("Evaluating model", model)
+        os.makedirs(f"{results_dir}/{model}", exist_ok=True)
 
-    for seed in SEEDS:
-        print("Evaluating seed", seed)
         for data_sparsity in SPARSITIES:
-            if str(seed) in fidelity_res and str(seed) in roc_auc_res:
-                continue
+            print("Evaluating sparsity", data_sparsity)
 
-            config["seed"] = seed
-            config["exp_path"] = f"ckpt/Mutagenicity/rcexp_mutag_seed_{seed}_logdir/rcexp_mutagexplainer_Mutagenicity_ep_600_seed_{seed}_sparsity_{data_sparsity}.pth.tar"
-            if not os.path.exists(config["exp_path"]):
-                print("Seed file not available", config["exp_path"], "Skipping.")
-                continue
+            fid_path = f"{results_dir}/{model}/fidelity_{data_sparsity}.json"
+            noise_path = f"{results_dir}/{model}/noise_{data_sparsity}.json"
+            fid = load_data(fid_path)
+            noise = load_data(noise_path)
+            for seed in SEEDS:
+                print("Evaluating seed", seed)
 
-            args = SimpleNamespace(**config)  # Namespace from dict
-            train, test = main(args)
+                if seed in fid and seed in noise:
+                    print("Already evaluated", model, seed, data_sparsity)
+                    continue
 
-            store_results(train, test, seed, data_sparsity, fidelity_res, roc_auc_res)
+                train, test = get_train_test_results(model, seed, data_sparsity)
+                if train is None and test is None:
+                    continue
 
-    save_data(fidelity_res, results_dir + fidelity_path)
-    save_data(roc_auc_res, results_dir + roc_path)
+                store_fidelity(train, test, str(seed), fid)
+                store_roc(train, test, str(seed), noise)
+
+            save_data(fid, fid_path)
+            save_data(noise, noise_path)

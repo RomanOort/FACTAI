@@ -24,7 +24,7 @@ from explainer import explain_gnnexplainer
 from explainer import explain_pgexplainer# _node as explain_pgexplainer
 # from explainer import explain_twopgexplainer# _node as explain_pgexplainer
 # from explainer import explain_pgexplainer_node
-# from explainer import explain_rcexplainer_noldb
+from explainer import explain_rcexplainer_noldb
 from explainer import explain_rcexplainer
 # from explainer import explain_tworcexplainer
 # from explainer import explain_rcnoiseexplainer

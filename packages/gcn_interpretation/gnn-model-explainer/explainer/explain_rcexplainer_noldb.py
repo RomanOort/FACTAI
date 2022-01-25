@@ -1004,7 +1004,7 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
         # self.feat[graph_idx, rand_order, :] = self.feat[graph_idx, order, :]
         # self.adj[graph_idx, rand_order, :] = self.adj[graph_idx, order, :]
         # self.adj[graph_idx, :, rand_order] = self.adj[graph_idx, :, order]
-        stats = accuracy_utils.Stats("PGExplainer_Boundary", self)
+        stats = accuracy_utils.Stats("PGExplainer_Boundary", self, self.model)
 
         for graph_idx in graph_indices:
             with torch.no_grad():
@@ -1157,7 +1157,7 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
                     avg_top6_acc += top6_acc
                     avg_top8_acc += top8_acc
 
-                stats.update(masked_adj, imp_nodes, graph_idx)
+                stats.update(masked_adj, imp_nodes, adj, x, label, sub_nodes)
 
                 if args.draw_graphs:
 
@@ -1464,7 +1464,7 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
         noise_handlers = [noise_utils.NoiseHandler("PGExplainer", self.model, self, noise_percent=x) for x in noise_range]
 
 
-        stats = accuracy_utils.Stats("PGExplainer_Boundary", self)
+        stats = accuracy_utils.Stats("PGExplainer_Boundary", self, self.model)
 
         for p in explainer.parameters():
             explainer_sum += torch.sum(p).item()
@@ -1586,7 +1586,7 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
                 topk_inv_diff[pred_label] += (pred_t[pred_label] - pred_topk[pred_label]).item()
                 thresh_nodes = 15
                 imp_nodes = explain.getImportantNodes(masked_adj, 8)
-                stats.update(masked_adj, imp_nodes, graph_idx)
+                stats.update(masked_adj, imp_nodes, adj, x, label, sub_nodes)
                 if self.args.post_processing:
                     masked_adj = accuracy_utils.getModifiedMask(masked_adj, sub_adj[0], sub_nodes.cpu().numpy())
 
@@ -2019,7 +2019,8 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
         ep_count = 0.
         loss_ep = 0.
 
-        for epoch in range(self.args.start_epoch, self.args.num_epochs):
+        from tqdm import tqdm
+        for epoch in tqdm(range(self.args.start_epoch, self.args.num_epochs)):
             myfile = open(log_file_path, "a")
             loss = 0
             logging_graphs=False
@@ -2044,7 +2045,7 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
             ep_variance = 0.
 
             AUC = accuracy_utils.AUC()
-            stats = accuracy_utils.Stats("PGExplainer_Boundary", self)
+            stats = accuracy_utils.Stats("PGExplainer_Boundary", self, self.model)
 
 
             masked_adjs = []
@@ -2171,7 +2172,7 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
 
                 thresh_nodes = 15
                 imp_nodes = explain.getImportantNodes(masked_adj, 8)
-                stats.update(masked_adj, imp_nodes, graph_idx)
+                stats.update(masked_adj, imp_nodes, adj, x, label, sub_nodes)
 
                 # masked_adj[orders[graph_idx], :] = masked_adj[rand_orders[graph_idx], :]
                 # masked_adj[:, orders[graph_idx]] = masked_adj[:, rand_orders[graph_idx]]
@@ -2724,8 +2725,8 @@ class ExplainModule(nn.Module):
         loss = pred_loss + inv_pred_loss + size_loss + mask_ent_loss
         # loss = net_boundary_loss + size_loss + mask_ent_loss
 
-        print("inv_pred_loss: ", inv_pred_loss.item(), "pred_loss: ", pred_loss.item(), "size_loss: ", size_loss.item(), "mask ent loss: ", mask_ent_loss.item())
-        print("total loss: ", loss.item())
+        # print("inv_pred_loss: ", inv_pred_loss.item(), "pred_loss: ", pred_loss.item(), "size_loss: ", size_loss.item(), "mask ent loss: ", mask_ent_loss.item())
+        # print("total loss: ", loss.item())
         return loss, inv_pred_loss.item()
 
 
