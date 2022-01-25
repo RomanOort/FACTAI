@@ -319,6 +319,17 @@ def arg_parse():
         default=0
     )
 
+    parser.add_argument(
+        "--AUC-type",
+        dest="AUC_type",
+        type=str,
+        help="Selector for how AUC is computed:"
+             "'original': The default method ignoring false negatives"
+             "'FN': Alternative AUC metric, which takes into account edges originally in S but not in S'"
+             "'full': Compare full adj matrices, taking into acount true negatives",
+        default="original"
+    )
+
     # TODO: Check argument usage
     parser.set_defaults(
         logdir="log",
