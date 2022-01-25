@@ -13,7 +13,7 @@ class PredictionError(Exception):
     
 
 class NoiseHandler(object):
-    def __init__(self, name, model, explainer, noise_percent=0.1, mode='auc'):
+    def __init__(self, name, model, explainer, noise_percent=0.1, mode='auc',  AUC_type='original'):
         self.sample_count = [0, 0]
         self.update_count = [0, 0]
         self.noise_percent = noise_percent
@@ -51,6 +51,9 @@ class NoiseHandler(object):
         self.mode = mode
         self.stats = accuracy_utils.Stats("Noise_" + name, explainer, self.model)
 
+        # Change the way AUC is computed, to include edges originally in S but no longer in S'
+        self.AUC_type = AUC_type
+        print("Using AUC Metric:", self.AUC_type)
 
     def sample(self, feat, adj, num_nodes, gt_nodes=None, gt_edges=None, mode='graph-noise'):
         if mode == 'graph-noise':
@@ -178,10 +181,16 @@ class NoiseHandler(object):
             num_elem = len(np.nonzero(masked_adj)[0]) // 2 - 1
             topk = min(topk, num_elem)
 
+            # FIXME why would topk*2? Is it because an edge is bidirectional and thus has two entires in adj?
             threshold = sorted(zip(gt.row, gt.col, gt.data), key = lambda x: x[2], reverse=True)[topk * 2][2]
             # print("THRESHOLD", threshold)
 
             gt_edges = masked_adj >= threshold
+            # print("topk", topk)
+            # print(gt_edges.shape)
+            # print(gt_edges.sum())
+            # print(np.tril(gt_edges).sum())
+            # exit()
 
             # AUC_ind = accuracy_utils.AUC()
             # AUC_ind.addEdgesFromAdj(masked_adj_noise, gt_edges)
@@ -189,7 +198,21 @@ class NoiseHandler(object):
 
             mAP = accuracy_utils.getmAPAdj(masked_adj_noise, gt_edges, edge_thresh=topk)
             self.mAP.update(mAP)
-            self.AUC.addEdgesFromAdj(masked_adj_noise, gt_edges)
+            # TODO WIGGERS: Hier twijfelen we over de AUC berekening
+            # masked_adj        = explanation S
+            # masked_adj_noise  = explanation S'
+
+            if self.AUC_type == 'original':
+                self.AUC.addEdgesFromAdj(masked_adj_noise, gt_edges)
+            elif self.AUC_type == "full":
+                self.AUC.preds += list(masked_adj_noise.ravel())
+                self.AUC.reals += list(gt_edges.ravel())
+            elif self.AUC_type == 'FN':
+                self.AUC.addEdgesFromAdj_includeFN(masked_adj_noise, gt_edges)
+
+
+
+
         self.nDCG.update(accuracy_utils.getNDCGAdj(masked_adj, masked_adj_noise))
 
         self.noise_diff.update(noise_diff)
