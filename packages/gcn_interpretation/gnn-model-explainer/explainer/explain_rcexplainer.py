@@ -982,7 +982,8 @@ class ExplainerRCExplainer(explain.Explainer):
 
         noise_iters = 1 # TODO: is dit aantal iteraties??
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-        noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x) for x in noise_range]
+
+        noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x, USE_METRIC_ON_FULL_ADJ=args.AUC_on_full_adj) for x in noise_range]
 
 
         graph_indices = list(graph_indices)
@@ -1913,7 +1914,7 @@ class ExplainerRCExplainer(explain.Explainer):
             explainer = ExplainModule(
                 model = self.model,
                 num_nodes = self.adj.shape[1],
-                emb_dims = 460, # Note: Hardcoded because we dont understand the origin
+                emb_dims = 660, # Note: Hardcoded because we dont understand the origin
                 device=self.device,
                 args = self.args
             )
@@ -2163,10 +2164,13 @@ class ExplainerRCExplainer(explain.Explainer):
 
                 tmp = float(t0 * np.power(t1 / t0, epoch /self.args.num_epochs))
 
-
-                rule_ix = rule_dict['idx2rule'][graph_idx]
-                rule = rule_dict['rules'][rule_ix]
-                rule_label = rule['label']
+                try:
+                    rule_ix = rule_dict['idx2rule'][graph_idx]
+                    rule = rule_dict['rules'][rule_ix]
+                    rule_label = rule['label']
+                except KeyError as e:
+                    print("Missing graph", graph_idx, "in rule dict, skipping")
+                    continue
 
                 boundary_list = []
                 for b_num in range(len(rule['boundary'])):
@@ -2304,9 +2308,13 @@ class ExplainerRCExplainer(explain.Explainer):
                 "epoch": epoch,
                 "loss_ep": loss_ep,
                 "loss": loss.item(),
-                "rule_top4_acc": rule_top4_acc/rule_acc_count,
-                "rule_top6_acc": rule_top6_acc/rule_acc_count,
-                "rule_top8_acc": rule_top8_acc/rule_acc_count,
+                "variance_epoch": ep_variance,
+                "flips": flips,
+                "inv_flips": inv_flips,
+                "pos_diff": pos_diff,
+                "inv_diff": inv_diff,
+                "topk_inv_flips": topk_inv_flips,
+                "topk_inv_diff": topk_inv_diff,
                 "lr": lr,
             })
 
