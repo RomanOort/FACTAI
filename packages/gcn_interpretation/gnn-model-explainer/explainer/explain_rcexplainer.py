@@ -2585,10 +2585,8 @@ class ExplainModule(nn.Module):
             h = torch.cat([f1, f2], dim=-1)
 
 
-        # TODO WIGGERS: use the nn.sequential
         h = h.to(self.device)
-        for elayer in self.elayers:
-            h = elayer(h)
+        h = self.elayers(h)
 
 
         self.values = torch.reshape(h, [-1])
