@@ -264,6 +264,11 @@ class AUC(object):
 
     def addEdgesFromAdj(self, masked_adj_n, gt_edges, dataset=None):
         adj = coo_matrix(masked_adj_n)
+        gt_sparse = coo_matrix(gt_edges)
+
+        # keep track of number of false negatives
+        fn = set(zip(gt_sparse.row, gt_sparse.col)) - set(zip(adj.row, adj.col)) - set(zip(adj.col, adj.row))
+        self.FN += len(fn)
 
         for r, c in list(zip(adj.row, adj.col)):
             if gt_edges[r, c] != 0 or gt_edges[c, r] != 0:
