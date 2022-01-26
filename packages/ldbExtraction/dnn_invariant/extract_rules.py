@@ -63,9 +63,9 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     To visualize the images, they need to be denormalized first. 
     """
     np.set_printoptions(threshold=np.inf, precision=20)
-    np.random.seed(0)
+    np.random.seed(args.seed)
     torch.set_printoptions(precision=6)
-    torch.manual_seed(0)
+    torch.manual_seed(args.seed)
 
     '''
     The layer to perform rule extraction
@@ -777,9 +777,9 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     # exit()
 
     iter = 0
-    np.random.seed(0)
+    np.random.seed(args.seed)
     # print("train_data_upt: len: ", train_data_upt.__len__())
-    np.random.seed()
+    # np.random.seed()
 
     if graph_indices is None:
         indices = np.random.permutation(train_data_upt.__len__())[0:2000]
