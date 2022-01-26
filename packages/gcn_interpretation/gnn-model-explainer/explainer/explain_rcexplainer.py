@@ -983,7 +983,7 @@ class ExplainerRCExplainer(explain.Explainer):
         noise_iters = 1 # TODO: is dit aantal iteraties??
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
-        noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x, USE_METRIC_ON_FULL_ADJ=args.AUC_on_full_adj) for x in noise_range]
+        noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x, AUC_type=args.AUC_type) for x in noise_range]
 
 
         graph_indices = list(graph_indices)
