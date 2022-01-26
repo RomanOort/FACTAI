@@ -11,6 +11,7 @@ MODELS = ["rcexp", "rcexp_noldb", "pgexplainer"]
 
 config = {
     "logdir":"log",
+    "AUC_type": "original",
     "ckptdir": "ckpt/Mutagenicity",
     "prefix":"",
     "add_self":"none",
