@@ -140,19 +140,19 @@ def main(config=None):
     model = model.to(device)
 
     # load state_dict (obtained by model.state_dict() when saving checkpoint)
-    print("===== checkpoint")
-    for k,v in ckpt["model_state"].items():
-        print(k, v.shape)
-
-    print("===== model")
-    for k,v in model.state_dict().items():
-        print(k, v.shape)
-    # print(model.state_dict())
-    s = model.conv_first.weight.shape
-    print("model.conv_first.weight.shape", s)
-    model.load_state_dict(ckpt["model_state"])
-
-    print("---DONE")
+    # print("===== checkpoint")
+    # for k,v in ckpt["model_state"].items():
+    #     print(k, v.shape)
+    #
+    # print("===== model")
+    # for k,v in model.state_dict().items():
+    #     print(k, v.shape)
+    # # print(model.state_dict())
+    # s = model.conv_first.weight.shape
+    # print("model.conv_first.weight.shape", s)
+    # model.load_state_dict(ckpt["model_state"])
+    #
+    # print("---DONE")
 
 
 
