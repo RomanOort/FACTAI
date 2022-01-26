@@ -480,7 +480,8 @@ def main(config=None):
     # Let's define exactly which modes we support 
     # We could even move each mode to a different method (even file)
     if prog_args.explain_node is not None:
-        explainer.explain(prog_args.explain_node, unconstrained=False)
+        raise NotImplementedError("WTf doet ie hier")
+        # explainer.explain(prog_args.explain_node, unconstrained=False)
     elif graph_mode:
         if prog_args.multigraph_class >= 0:  #explain particular class
             # print(cg_dict["label"])

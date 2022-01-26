@@ -44,6 +44,9 @@ import tqdm
 BASE_DIRECTORY = "/home/fisher/GCN-Group-interpretation/ai-adversarial-detection/dnn_invariant"
 
 def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=None, graph_indices=None, pool_size=50):
+    print("LEN train", len(train_data[2]))
+    print("TEST DATA", test_data[2])
+    # exit(1)
     from os import path
     pickle_path = "./data/rule_dict_MNISTSuperpixel.pickle"
 
@@ -63,9 +66,9 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     To visualize the images, they need to be denormalized first. 
     """
     np.set_printoptions(threshold=np.inf, precision=20)
-    np.random.seed(args.seed)
+    np.random.seed(0)
     torch.set_printoptions(precision=6)
-    torch.manual_seed(args.seed)
+    torch.manual_seed(0)
 
     '''
     The layer to perform rule extraction
@@ -777,15 +780,15 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     # exit()
 
     iter = 0
-    np.random.seed(args.seed)
+    np.random.seed(0)
     # print("train_data_upt: len: ", train_data_upt.__len__())
     # np.random.seed()
-
+    counter = 0
     if graph_indices is None:
         indices = np.random.permutation(train_data_upt.__len__())[0:2000]
     else:
         indices = np.random.permutation(graph_indices)
-    
+
     check_repeat = np.repeat(False, train_data_upt.__len__())
     check_repeat_test = np.repeat(False, test_data.__len__())
 
@@ -816,12 +819,12 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     # sublabel_nodes_array = all_data['sub_label_nodes']
     # sublabel_array = all_data['sub_label']
 
-    
+
     seed_indices = np.random.choice(indices, size=pool_size)
-    
+
     for i in range(len(indices)):
         idx2rule[i] = None
-    
+
     for i in tqdm.tqdm(range(len(indices))):
         rule_label = train_data_upt._data[2][i]
 
@@ -858,10 +861,10 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
 
         # Compute the feature for the seed image
         feature = train_data_upt.getCNNFeature(i).cuda()
-        # # print("feature:", feature.shape)
+        # print("feature:", feature.shape)
         # label_update = model._getOutputOfOneLayer(feature)
         # # print("label update: ", label_update)
-        # exit()
+
 
 
         # Create candidate pool
@@ -943,7 +946,7 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
                         idx2rule[c_ix] = []
                     idx2rule[c_ix].append(len(rule_list_all))
 
-    
+
         rule_list_all.append(inv_classifier)
         cover_list_all.append(cover_indi_train)
 
@@ -971,8 +974,6 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
 
         step_4 = time.time()
         # print('Time for this rule:', step_4 - step_3)
-
-
     # print('RULE_LIST_ALL => ')
     printEvalInfo(rule_list_all, cover_list_all, is_set_cover)
     printEvalInfoByNN(rule_list_all, cover_list_all, is_set_cover)

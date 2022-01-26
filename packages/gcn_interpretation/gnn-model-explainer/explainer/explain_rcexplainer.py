@@ -2006,7 +2006,11 @@ class ExplainerRCExplainer(explain.Explainer):
 
         train_data = (self.adj[:size], self.feat[:size], self.label[:size], self.num_nodes[:size])
         val_data = (self.adj[size - 100:], self.feat[size - 100:], self.label[size - 100:], self.num_nodes[size - 100:])
-        rule_dict = extract.extract_rules(self.args.bmname, train_data, val_data, args, self.model.state_dict(), graph_indices=None, pool_size=args.pool_size)
+        rule_dict = extract.extract_rules(self.args.bmname, train_data,
+                                          val_data, args,
+                                          self.model.state_dict(),
+                                          graph_indices=None,
+                                          pool_size=args.pool_size)
         params_optim = []
         for name,param in explainer.named_parameters():
             if "model" in name:
