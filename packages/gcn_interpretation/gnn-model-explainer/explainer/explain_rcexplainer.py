@@ -1953,6 +1953,10 @@ class ExplainerRCExplainer(explain.Explainer):
 
             if self.args.eval:
                 train = self.eval_graphs_2(args, graph_indices, explainer)
+                # if train_set == test_set
+                if len(graph_indices) == len(test_graph_indices):
+                    print("Trainset == Testset, not evaluating test set")
+                    return train, train, [], []
                 test = self.eval_graphs_2(args, test_graph_indices, explainer)
                 return train, test, [], []
 
