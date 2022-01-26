@@ -1,0 +1,1 @@
+rsync * tvorden@WS8:~/tvorden/FACTAI/packages -avzP --exclude "gcn_interpretation/gnn-model-explainer/wandb" --exclude "gcn_interpretation/datasets/"
