@@ -150,7 +150,7 @@ def main(config=None):
     # # print(model.state_dict())
     # s = model.conv_first.weight.shape
     # print("model.conv_first.weight.shape", s)
-    # model.load_state_dict(ckpt["model_state"])
+    model.load_state_dict(ckpt["model_state"])
     #
     # print("---DONE")
 
@@ -521,8 +521,6 @@ def main(config=None):
                     raise NotImplementedError("Chose data sparsity 0.8 or "
                                               "1.0. Got", prog_args.train_data_sparsity)
 
-                print("Train", len(train_graph_indices))
-                print("Test", len(test_graph_indices))
                 train, test, _, _ = explainer.explain_graphs(prog_args, graph_indices=train_graph_indices, test_graph_indices=test_graph_indices)
 
 
