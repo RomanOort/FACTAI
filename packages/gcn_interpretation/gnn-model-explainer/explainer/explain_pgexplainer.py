@@ -707,7 +707,7 @@ class ExplainerPGExplainer(explain.Explainer):
 
 
         # log_name = self.args.prefix + "_logdir"
-        log_name = self.args.prefix + f"_seed_{args.seed}_sparsity_{self.args.train_data_sparsity}" + "_logdir"
+        log_name = self.args.prefix + f"_seed_{args.seed}_sparsity_{self.args.train_data_sparsity}" + "_logdir_RIGHT_HYPERPARAMS"
         
         log_path = os.path.join(self.args.ckptdir, log_name)
         if os.path.isdir(log_path):
@@ -1006,7 +1006,8 @@ class ExplainerPGExplainer(explain.Explainer):
 
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
                 # f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgexplainer.pth.tar"
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname \
+                         + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}_RIGHT_HYPERPARAMS.pth.tar"
                 
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
@@ -1015,7 +1016,7 @@ class ExplainerPGExplainer(explain.Explainer):
                 # f_path = './ckpt/explainer3_synthetic_data_3label_3sublabel_pgeboundary' + '.pth.tar'
                 # f_path = self.args.prefix + "explainer_" + self.args.bmname + "_pgexplainer_ep_" + str(
                     # epoch) + ".pth.tar"
-                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_ep_" + str(epoch) + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}.pth.tar"
+                f_path = self.args.prefix + "explainer_" + self.args.bmname + "_ep_" + str(epoch) + f"_seed_{self.args.seed}_sparsity_{self.args.train_data_sparsity}_RIGHT_HYPERPARAMS.pth.tar"
                 
                 save_path = os.path.join(log_path, f_path)
                 torch.save(explainer.state_dict(), save_path)
