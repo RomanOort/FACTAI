@@ -73,11 +73,12 @@ def plot_graphs(results_folder, type_data):
                 
             train = compute_values(data, labels[0], labels[1], train=True)
             test = compute_values(data, labels[0], labels[1], train=False)
-            
+
             plot(train, labels[2:], names[model], i+1, sp, mask=mask, train=True)
             plot(test, labels[2:], names[model], i+1, sp, mask=mask, train=False) if sp == 0.8 else 0
 
     plt.show()
+
 
 if __name__ == '__main__':
     # python3 plot_graphs.py --path=results
