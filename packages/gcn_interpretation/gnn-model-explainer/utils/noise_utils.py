@@ -13,9 +13,9 @@ class PredictionError(Exception):
     
 
 class NoiseHandler(object):
-    def __init__(self, name, model, explainer, noise_percent=0.1, mode='auc',  AUC_type='original'):
-        self.sample_count = [0, 0]
-        self.update_count = [0, 0]
+    def __init__(self, name, model, explainer, noise_percent=0.1, mode='auc',  AUC_type='original', num_classes=2):
+        self.sample_count = [0] * num_classes
+        self.update_count = [0] * num_classes
         self.noise_percent = noise_percent
         self.explainer = explainer
         self.model = model
