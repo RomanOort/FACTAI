@@ -10,6 +10,7 @@ import os
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
+import tqdm
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -232,10 +233,14 @@ class ExplainerPGExplainer(explain.Explainer):
             node_indices[0], self.args.bmname
         ) 
 
+        embed_dims = self.model.embedding_dim * self.model.num_layers * 3
+        if args.bmname == "MNISTSuperpixels":
+            embed_dims = 660
+
         explainer = ExplainModule(
             model = self.model, 
             num_nodes = self.adj.shape[1],
-            emb_dims = self.model.embedding_dim * self.model.num_layers * 3,
+            emb_dims = embed_dims,
             device = self.device,
             args = self.args
         )
@@ -457,13 +462,16 @@ class ExplainerPGExplainer(explain.Explainer):
 
         # collect: model AUC, noisy model AUC, model-noise mAP, model-noise AUC
 
-        stats = accuracy_utils.Stats("PGExplainer", self)
-        
+        stats = accuracy_utils.Stats("PGExplainer", self, self.model)
+
+        num_classes = 2
+        if args.bmname == "MNISTSuperpixels":
+            num_classes = 10
 
         # noise stats
         noise_iters = 5 # todo: 5 or 1?
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-        noise_handlers = [noise_utils.NoiseHandler("PGExplainer", self.model, self, noise_percent=x) for x in noise_range]
+        noise_handlers = [noise_utils.NoiseHandler("PGExplainer", self.model, self, noise_percent=x, AUC_type=args.AUC_type, num_classes=num_classes) for x in noise_range]
 
         np.random.shuffle(graph_indices)
         explainer.eval()
@@ -485,8 +493,10 @@ class ExplainerPGExplainer(explain.Explainer):
 
         times = []
 
-        for graph_idx in graph_indices:
-            print("doing for graph index: ", graph_idx)
+        for graph_idx in tqdm.tqdm(graph_indices):
+            # from contextlib import redirect_stdout
+            # with redirect_stdout(None):
+            # print("doing for graph index: ", graph_idx)
 
             # extract features and
 
@@ -516,7 +526,7 @@ class ExplainerPGExplainer(explain.Explainer):
 
             adj = torch.tensor(sub_adj, dtype=torch.float)
             x = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-            label = torch.tensor(sub_label, dtype=torch.long)
+            label = sub_label.clone().detach().long()
 
             pred_label = np.argmax(self.pred[0][graph_idx], axis=0)
             if pred_label != label.item():
@@ -533,14 +543,14 @@ class ExplainerPGExplainer(explain.Explainer):
             tmp = float(t0 * np.power(t1 / t0, 1.0))
 
             start = time.time()
-            
+
             emb = self.model.getEmbeddings(x.cuda(), adj.cuda(), [sub_nodes.cpu().numpy()])
 
             pred, masked_adj = explainer((x[0], emb[0], adj[0], tmp, label, sub_nodes),training=False)
             # explainer.loss(pred, pred_label)
             # pred_masked, _ = self.model(x.cuda(), masked_adj.unsqueeze(0), batch_num_nodes=[sub_nodes.cpu().numpy()])
             # pred_try, _ = self.model(x.cuda(), adj.cuda(), batch_num_nodes=[sub_nodes.cpu().numpy()])
-            
+
             # print("pred debug: ", self.pred[0][graph_idx], pred_try, pred, torch.nn.functional.softmax(pred_masked))
 
             # loss = loss + explainer.loss(pred, pred_label)
@@ -548,28 +558,29 @@ class ExplainerPGExplainer(explain.Explainer):
 
             end = time.time()
             times.append(end - start)
-            print(np.mean(times), np.std(times))
+            # print(np.mean(times), np.std(times))
 
             if self.args.shuffle_adj:
                 masked_adj[orders[graph_idx], :] = masked_adj[rand_orders[graph_idx], :]
                 masked_adj[:, orders[graph_idx]] = masked_adj[:, rand_orders[graph_idx]]
 
             masked_adj_sfmx = np.exp(masked_adj)/np.sum(np.exp(masked_adj))
-            
+
             orig_adj = sub_adj[0]
-            
+
             thresh_nodes = 15
             imp_nodes = explain.getImportantNodes(masked_adj, 8)
             stats.update(masked_adj, imp_nodes, adj, x, label, sub_nodes)
             # stats.update(masked_adj, imp_nodes, graph_idx)
             label = self.label[graph_idx]
-            
             if self.args.noise:
                 for n_iter in range(noise_iters):
                     for nh in noise_handlers:
                         try:
-                            noise_feat, noise_adj = nh.sample(sub_feat[0], sub_adj[0], sub_nodes)
-                        except: 
+                            noise_feat, noise_adj, noise_label = nh.sample(sub_feat[0], sub_adj[0], sub_nodes)
+                        except Exception as e:
+                            raise e
+                            print("Exception ignored", e)
                             continue
 
                         emb_noise = model.getEmbeddings(noise_feat.unsqueeze(0), noise_adj.unsqueeze(0), [sub_nodes.cpu().numpy()])
@@ -577,7 +588,7 @@ class ExplainerPGExplainer(explain.Explainer):
                         pred_n, masked_adj_n = explainer((noise_feat, emb_noise[0], noise_adj, tmp, label, sub_nodes), training=False)
                         masked_adj_n = masked_adj_n.cpu().detach() * noise_adj
 
-                        nh.update(masked_adj, masked_adj_n.cpu().detach().numpy(), sub_adj[0], noise_adj.cpu().detach().numpy(), None, graph_idx)
+                        nh.update(masked_adj, masked_adj_n.cpu().detach().numpy(), sub_adj[0], noise_adj.cpu().detach().numpy(), None, graph_idx, noise_label, x, sub_nodes)
 
         eval_dir = os.path.dirname(self.args.exp_path)
         eval_file = "eval_" + self.args.bmname + "_" + self.args.explainer_method + ".txt"
@@ -598,7 +609,7 @@ class ExplainerPGExplainer(explain.Explainer):
         # myfile.write("\n Average rule accuracy: {}".format(rule_label_match / acc_count))
         print(stats)
         ROC_AUC, noise_values = [], []
-        
+
         if self.args.noise:
             for nh in noise_handlers:
                 print(nh)
@@ -607,7 +618,7 @@ class ExplainerPGExplainer(explain.Explainer):
                 print(nh.summary())
                 ROC_AUC.append(nh.AUC.getAUC())
                 noise_values.append(nh.noise_percent)
-        
+
         print("FIDELITY SUMMARY")
         print(stats.summary())
         myfile.close()
@@ -632,12 +643,14 @@ class ExplainerPGExplainer(explain.Explainer):
 
         graph_indices = list(graph_indices)
 
-
+        embed_dims = self.model.embedding_dim * self.model.num_layers * 2
+        if args.bmname == "MNISTSuperpixels":
+            embed_dims = 660
 
         explainer = ExplainModule(
             model = self.model, 
             num_nodes = self.adj.shape[1],
-            emb_dims = self.model.embedding_dim * self.model.num_layers * 2,
+            emb_dims = embed_dims,
             device=self.device,
             args = self.args
         )
