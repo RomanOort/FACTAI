@@ -980,10 +980,14 @@ class ExplainerRCExplainer(explain.Explainer):
         pred_removed_edges = 0.
         topk = self.args.topk
 
+        num_classes = 2
+        if args.bmname == "MNISTSuperpixels":
+            num_classes = 10
+
         noise_iters = 1 # TODO: is dit aantal iteraties??
         noise_range = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
 
-        noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x, AUC_type=args.AUC_type) for x
+        noise_handlers = [noise_utils.NoiseHandler("RCExplainer", self.model, self, noise_percent=x, AUC_type=args.AUC_type, num_classes=num_classes) for x
         in noise_range]
 
 
@@ -1230,7 +1234,8 @@ class ExplainerRCExplainer(explain.Explainer):
                         for nh in noise_handlers:
                             try:
                                 noise_feat, noise_adj, noise_label = nh.sample(sub_feat[0], sub_adj[0], sub_nodes)
-                            except:
+                            except Exception as e:
+                                print("Ignored exception", e)
                                 continue
                             emb_noise = self.model.getEmbeddings(noise_feat.unsqueeze(0), noise_adj.unsqueeze(0), [sub_nodes.cpu().numpy()])
                             pred_n, masked_adj_n, _, _, _ = explainer((noise_feat, emb_noise[0], noise_adj, tmp, label, sub_nodes), training=False)
