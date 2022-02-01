@@ -40,7 +40,7 @@ def compute_values(data, x_name, y_name):
         
     return train, test
 
-def plot(data, labels, model_name, index, sp , threshold_sp, type_data, type='same'):
+def plot(data, labels, model_name, axes, sp , threshold_sp, type_data, type='same'):
     """
     Plots the values given in data, with the corresponding labels and titles.
     """
@@ -53,14 +53,11 @@ def plot(data, labels, model_name, index, sp , threshold_sp, type_data, type='sa
     # We only look at sparsity values higher than some threshold 
     mask_x = np.where(y >= threshold_sp)[0] if type_data == 'fidelity' else np.arange(len(x)) 
     
-    plt.subplot(1,2,index)
-    plt.errorbar(x[mask_x], y[mask_x], yerr=std[mask_x], capsize=4, label=plotting_dict[type]['label'], fmt=plotting_dict[type]['color'], linewidth=0.75)
-
-    plt.title(f"Train/test split: 80/20%") if sp == 0.8 else plt.title(f"Train/test split: 100/0%")
-    plt.xlabel(labels[0] + " (%)")
-    plt.ylabel(labels[1])
-    plt.legend(fontsize=6)
-    plt.tight_layout()
+    axes.errorbar(x[mask_x], y[mask_x], yerr=std[mask_x], capsize=4, label=plotting_dict[type]['label'], fmt=plotting_dict[type]['color'], linewidth=0.75)
+    axes.set_title(f"Train/test split: 80/20%") if sp == 0.8 else axes.set_title(f"Train/test split: 100/0%")
+    axes.set_xlabel(labels[0] + " (%)")
+    axes.set_ylabel(labels[1])
+    axes.legend(fontsize=6)
     
     # Set axis to match paper
     if type_data == 'fidelity':
@@ -73,6 +70,9 @@ def plot_graphs(results_folder, type_data, threshold=0):
     models = os.listdir(results_folder)
     sparsity = [0.8, 1.0]
     names = {'rcexp': 'RCExplainer', 'pgexplainer': 'PGExplainer', 'rcexp_noldb': 'RCExp-NoLDB', 'pretrained_rcexplainer': 'Pretrained RCExplainer'}
+    
+    # TODO: set figsize for in report
+    _, (ax1, ax2) = plt.subplots(1,2)
     
     for model in models:
         for i, sp in enumerate(sparsity):
@@ -89,11 +89,12 @@ def plot_graphs(results_folder, type_data, threshold=0):
             train, test = compute_values(data, labels[0], labels[1])
             
             if sp == 0.8:
-                plot(train, labels[2:], names[model], i+1, sp, threshold, type_data, type='train')
-                plot(test, labels[2:], names[model], i+1, sp, threshold, type_data, type='test')
+                plot(train, labels[2:], names[model], ax1, sp, threshold, type_data, type='train')
+                plot(test, labels[2:], names[model], ax1, sp, threshold, type_data, type='test')
             elif sp == 1.0:
-                plot(test, labels[2:], names[model], i+1, sp, threshold, type_data, type='same')
-            
+                plot(test, labels[2:], names[model], ax2, sp, threshold, type_data, type='same')
+
+    plt.tight_layout()
     plt.show()
 
 
