@@ -50,7 +50,7 @@ def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=N
     from os import path
     pickle_path = "./data/rule_dict_MNISTSuperpixel.pickle"
 
-    if path.exists(pickle_path):
+    if path.exists(pickle_path) and False: # Disabled pickled rules because this might affect perfomance of RCExplainer
         print("NOTE: Rules already extracted")
         print("Using file", pickle_path)
         rule_dict_save = pickle.load(open(pickle_path, 'rb'))

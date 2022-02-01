@@ -118,6 +118,9 @@ def get_file_name(model: str, seed: str, sparsity: str, dataset='mutag'):
            f"_{sparsity}_logdir_RIGHT_HYPERPARAMS" \
            f"/{model}_mutagexplainer_Mutagenicity_ep_600_seed_" \
            f"{seed}_sparsity_{sparsity}_RIGHT_HYPERPARMS.pth.tar"
+    if not os.path.isfile(path):
+        path = path.replace("HYPERPARMS", "HYPERPARAMS")
+
     return path
 
 

@@ -96,6 +96,7 @@ def plot_graphs(results_folder, type_data, threshold=0):
             
     plt.show()
 
+
 if __name__ == '__main__':
     # python3 plot_graphs.py
     
