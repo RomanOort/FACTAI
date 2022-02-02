@@ -61,10 +61,10 @@ def plot(data, labels, model_name, axes, sp , threshold_sp, type_data, type='sam
 
     # Set axis to match paper
     if type_data == 'fidelity':
-        plt.yticks(np.arange(0, .71, 0.1))
+        axes.set_yticks(np.arange(0, .71, 0.1))
     elif type_data == 'noise':
-        plt.xticks(np.arange(0, 31, 10))
-        plt.yticks(np.arange(0.5, 1.01, 0.1))
+        axes.set_xticks(np.arange(0, 31, 10))
+        axes.set_yticks(np.arange(0.5, 1.01, 0.1))
 
 def plot_main(results_folder, type_data, figsize, threshold=0):
     models = os.listdir(results_folder)
