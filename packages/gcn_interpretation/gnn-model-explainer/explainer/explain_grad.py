@@ -160,7 +160,7 @@ class ExplainerGrad(explain.Explainer):
             explainer.adj_feat_grad(node_idx_new, pred_label)[0]
         )[0]
         masked_adj = adj_grad + adj_grad.t()
-        masked_adj = nn.functional.sigmoid(masked_adj)
+        masked_adj = torch.sigmoid(masked_adj)
         masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
         
         # with open(os.path.join(label_dir, fname), 'wb') as outfile:
@@ -289,7 +289,7 @@ class ExplainerGrad(explain.Explainer):
             explainer.adj_feat_grad(node_idx_new, pred_label)[0]
         )[0]
         masked_adj = adj_grad + adj_grad.t()
-        masked_adj = nn.functional.sigmoid(masked_adj)
+        masked_adj = torch.sigmoid(masked_adj)
         masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
  
         fname = 'masked_adj_' + io_utils.gen_explainer_prefix(self.args) + (

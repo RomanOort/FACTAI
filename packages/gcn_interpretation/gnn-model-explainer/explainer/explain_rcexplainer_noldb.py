@@ -2083,7 +2083,8 @@ class ExplainerRCExplainerNoLDB(explain.Explainer):
 
                 adj   = torch.tensor(sub_adj, dtype=torch.float)
                 x     = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-                label = torch.tensor(sub_label, dtype=torch.long)
+                # label = torch.tensor(sub_label, dtype=torch.long)
+                label = sub_label.clone().detach()
 
                 # if self.emb is not None:
                 #     sub_emb = self.emb[graph_idx, :]

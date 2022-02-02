@@ -315,7 +315,6 @@ class AUC(object):
         print("AUC computation:")
         print(" Number of false negatives found:", self.FN)
         print(" Total number of edges in data:  ", len(self.preds))
-        # TODO: ugly dugly fix
         return roc_auc_score(self.reals, self.preds)
 
     def clearAUC(self):

@@ -66,7 +66,7 @@ def plot(data, labels, model_name, axes, sp , threshold_sp, type_data, type='sam
         plt.xticks(np.arange(0, 31, 10))
         plt.yticks(np.arange(0.5, 1.01, 0.1))
 
-def plot_graphs(results_folder, type_data, threshold=0):
+def plot_main(results_folder, type_data, threshold=0):
     models = os.listdir(results_folder)
     sparsity = [0.8, 1.0]
     names = {'rcexp': 'RCExplainer', 'pgexplainer': 'PGExplainer', 'rcexp_noldb': 'RCExp-NoLDB', 'pretrained_rcexplainer': 'Pretrained RCExplainer'}
@@ -105,5 +105,5 @@ if __name__ == '__main__':
     parser.add_argument('--path', type=str, help='path to ‘results’ folder', default='results')
     args = parser.parse_args()
     
-    plot_graphs(args.path, 'fidelity', threshold=0)
-    plot_graphs(args.path, 'noise')
+    plot_main(args.path, 'fidelity', threshold=0)
+    plot_main(args.path, 'noise')

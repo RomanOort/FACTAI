@@ -260,7 +260,7 @@ class ExplainerBoundaryInverse(explain.Explainer):
                 explainer.adj_feat_grad(node_idx_new, pred_label[node_idx_new])[0]
             )[graph_idx]
             masked_adj = adj_grad + adj_grad.t()
-            masked_adj = nn.functional.sigmoid(masked_adj)
+            masked_adj = torch.sigmoid(masked_adj)
             masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
         else:
             explainer.train()
@@ -354,7 +354,7 @@ class ExplainerBoundaryInverse(explain.Explainer):
                         explainer.masked_adj[0].cpu().detach().numpy()
                 )
             else:
-                adj_atts = nn.functional.sigmoid(adj_atts).squeeze()
+                adj_atts = torch.sigmoid(adj_atts).squeeze()
                 masked_adj = adj_atts.cpu().detach().numpy() * sub_adj.squeeze()
 
             if graph_mode:
@@ -1171,7 +1171,7 @@ class ExplainModule(nn.Module):
                 ft_proj = torch.sum(graph_embedding * boundary[:20]) + boundary[20]
                 print("graph: ", gt_proj, ft_proj)
 
-                boundary_loss += torch.nn.functional.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
+                boundary_loss += torch.torch.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
             boundary_loss = self.args.boundary_c * (boundary_loss / len(boundary_list))
 
         else:
@@ -1183,7 +1183,7 @@ class ExplainModule(nn.Module):
             gt_proj = torch.sum(gt_embedding * boundary[:20]) + boundary[20]
             inv_proj = torch.sum(inv_embedding * boundary[:20]) + boundary[20]
             print("inv: ", gt_proj, inv_proj)
-            inv_loss = torch.nn.functional.sigmoid(sigma * (gt_proj * inv_proj))
+            inv_loss = torch.torch.sigmoid(sigma * (gt_proj * inv_proj))
             inv_losses.append(inv_loss)
 
         inv_losses_t = torch.stack(inv_losses)

@@ -44,9 +44,6 @@ import tqdm
 BASE_DIRECTORY = "/home/fisher/GCN-Group-interpretation/ai-adversarial-detection/dnn_invariant"
 
 def extract_rules(dataset_name, train_data, test_data, args,  model_state_dict=None, graph_indices=None, pool_size=50):
-    print("LEN train", len(train_data[2]))
-    print("TEST DATA", test_data[2])
-    # exit(1)
     from os import path
     pickle_path = "./data/rule_dict_MNISTSuperpixel.pickle"
 
