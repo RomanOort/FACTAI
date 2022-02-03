@@ -322,7 +322,7 @@ class ExplainerBoundaryJoint(explain.Explainer):
                 explainer.adj_feat_grad(node_idx_new, pred_label[node_idx_new])[0]
             )[graph_idx]
             masked_adj = adj_grad + adj_grad.t()
-            masked_adj = nn.functional.sigmoid(masked_adj)
+            masked_adj = torch.sigmoid(masked_adj)
             masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
         else:
             explainer.train()
@@ -412,7 +412,7 @@ class ExplainerBoundaryJoint(explain.Explainer):
                         explainer.masked_adj[0].cpu().detach().numpy()
                 )
             else:
-                adj_atts = nn.functional.sigmoid(adj_atts).squeeze()
+                adj_atts = torch.sigmoid(adj_atts).squeeze()
                 masked_adj = adj_atts.cpu().detach().numpy() * sub_adj.squeeze()
 
             if graph_mode:
@@ -1241,7 +1241,7 @@ class ExplainModule(nn.Module):
             for boundary in boundary_list:
                 gt_proj = torch.sum(gt_embedding * boundary[:20]) + boundary[20]
                 ft_proj = torch.sum(graph_embedding * boundary[:20]) + boundary[20]
-                boundary_loss += torch.nn.functional.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
+                boundary_loss += torch.torch.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
             boundary_loss = self.args.boundary_c * (boundary_loss / len(boundary_list))
         else:
             assert(False)

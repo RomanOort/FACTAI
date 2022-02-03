@@ -13,8 +13,6 @@ torch.manual_seed(0)
 
 class RuleMinerLargeCandiPool():
     def __init__(self, model_, train_mdata_, label_, layer_start_=-1):
-        print("rule label: ", label_)
-
         self._model = model_
         self._train_mdata = train_mdata_
 
@@ -36,9 +34,6 @@ class RuleMinerLargeCandiPool():
 
         self._pos_sample = len(self._indices_list_pos)
         self._neg_sample = len(self._indices_list_neg)
-        print("rule: pos samples", self._pos_sample)
-        print("rule: neg samples", self._neg_sample)
-
 
         self._layer_start = layer_start_
 

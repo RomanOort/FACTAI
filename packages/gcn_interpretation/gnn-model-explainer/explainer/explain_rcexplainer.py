@@ -2150,7 +2150,8 @@ class ExplainerRCExplainer(explain.Explainer):
 
                 adj   = torch.tensor(sub_adj, dtype=torch.float)
                 x     = torch.tensor(sub_feat, requires_grad=True, dtype=torch.float)
-                label = torch.tensor(sub_label, dtype=torch.long)
+                # label = torch.tensor(sub_label, dtype=torch.long)
+                label = sub_label.clone().detach()
 
                 # if self.emb is not None:
                 #     sub_emb = self.emb[graph_idx, :]
@@ -2786,7 +2787,7 @@ class ExplainModule(nn.Module):
                 for boundary in boundary_list:
                     gt_proj = torch.sum(gt_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
                     ft_proj = torch.sum(graph_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
-                    boundary_loss += torch.nn.functional.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
+                    boundary_loss += torch.torch.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
                 boundary_loss = self.args.boundary_c * (boundary_loss / len(boundary_list))
 
             if self.args.inverse_boundary_c < 0.0:
@@ -2799,7 +2800,7 @@ class ExplainModule(nn.Module):
                     gt_proj = torch.sum(gt_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
                     inv_proj = torch.sum(inv_embedding * boundary[:OUTPUT_DIM]) + boundary[OUTPUT_DIM]
                     # print("inv: ", gt_proj, inv_proj)
-                    inv_loss = torch.nn.functional.sigmoid(sigma * (gt_proj * inv_proj))
+                    inv_loss = torch.torch.sigmoid(sigma * (gt_proj * inv_proj))
                     inv_losses.append(inv_loss)
 
                 inv_losses_t = torch.stack(inv_losses)

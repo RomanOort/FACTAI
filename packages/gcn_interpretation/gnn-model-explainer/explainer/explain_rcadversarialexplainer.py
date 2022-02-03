@@ -2715,7 +2715,7 @@ class ExplainModule(nn.Module):
                 for boundary in boundary_list:
                     gt_proj = torch.sum(gt_embedding * boundary[:20]) + boundary[20]
                     ft_proj = torch.sum(graph_embedding * boundary[:20]) + boundary[20]
-                    boundary_loss += torch.nn.functional.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
+                    boundary_loss += torch.torch.sigmoid(-1.0 * sigma * (gt_proj * ft_proj))
                 boundary_loss = self.args.boundary_c * (boundary_loss / len(boundary_list))
 
             if self.args.inverse_boundary_c < 0.0:
@@ -2728,7 +2728,7 @@ class ExplainModule(nn.Module):
                     gt_proj = torch.sum(gt_embedding * boundary[:20]) + boundary[20]
                     inv_proj = torch.sum(inv_embedding * boundary[:20]) + boundary[20]
                     # print("inv: ", gt_proj, inv_proj)
-                    inv_loss = torch.nn.functional.sigmoid(sigma * (gt_proj * inv_proj))
+                    inv_loss = torch.torch.sigmoid(sigma * (gt_proj * inv_proj))
                     inv_losses.append(inv_loss)
 
                 inv_losses_t = torch.stack(inv_losses)

@@ -116,7 +116,7 @@ def store_fidelity(train, test, seed: str, file):
 def get_file_name(model: str, seed: str, sparsity: str, dataset='mutag'):
     path = f"saved_models/{model}_{dataset}_seed_{seed}_sparsity" \
            f"_{sparsity}_logdir_RIGHT_HYPERPARAMS" \
-           f"/{model}_mutagexplainer_Mutagenicity_ep_600_seed_" \
+           f"/{model}_mutagexplainer_Mutagenicity_ep_0_seed_" \
            f"{seed}_sparsity_{sparsity}_RIGHT_HYPERPARMS.pth.tar"
     if not os.path.isfile(path):
         path = path.replace("HYPERPARMS", "HYPERPARAMS")
@@ -141,9 +141,7 @@ def get_train_test_results(model, seed, sparsity):
     return train, test
 
 
-if __name__ == "__main__":
-    results_dir = "results_RIGHT_HYPER_PARAM/"
-
+def get_all_results(results_dir):
     # Create results folder
     os.makedirs(results_dir, exist_ok=True)
 
@@ -174,3 +172,7 @@ if __name__ == "__main__":
 
             save_data(fid, fid_path)
             save_data(noise, noise_path)
+
+
+if __name__ == "__main__":
+    get_all_results("results_RIGHT_HYPER_PARAM/")
