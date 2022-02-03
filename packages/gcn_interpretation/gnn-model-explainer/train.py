@@ -2666,7 +2666,9 @@ def arg_parse(str_to_parse=None):
         assign_ratio=0.1,
     )
 
-    return parser.parse_args(str_to_parse.split())
+    if str_to_parse is not None:
+        return parser.parse_args(str_to_parse.split())
+    return parser.parse_args()
 
 
 def main():

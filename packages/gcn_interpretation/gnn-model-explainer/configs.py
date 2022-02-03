@@ -376,4 +376,6 @@ def arg_parse(str_to_parse=None):
         bloss_version=""
     )
 
-    return parser.parse_args(str_to_parse.split())
+    if str_to_parse is not None:
+        return parser.parse_args(str_to_parse.split())
+    return parser.parse_args()
