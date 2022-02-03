@@ -1,4 +1,5 @@
 # Installation and use of this study
+NOTE: this codebase and instructions are a reproduction study of "Robust Counterfactual Explanations on Graph Neural Networks" (Bajaj, et al. 2021).
 
 We experienced some issues with reproducing the exact setup using the original provided versions of libraries. 
 In our case, using the latest version of the libraries yielded a working setup.
