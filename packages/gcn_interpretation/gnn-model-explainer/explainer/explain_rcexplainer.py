@@ -1420,6 +1420,10 @@ class ExplainerRCExplainer(explain.Explainer):
         avg_time = np.mean(execution_times)
         avg_time_std = np.std(execution_times)
         print("Average execution time (in seconds)", avg_time, "std:", avg_time_std)
+
+        with open("timing_result.txt", "w+") as f:
+            f.write(f"Average execution time (in seconds) {avg_time} std: {avg_time_std}")
+
         return sparsity, fidelity, noise_values, ROC_AUC
 
 
@@ -2003,7 +2007,8 @@ class ExplainerRCExplainer(explain.Explainer):
         elif self.args.bmname == "MNIST":
             size = 38500
         elif self.args.bmname == "MNISTSuperpixels":
-            size = 42000
+            # size = 42000
+            size = self.adj.shape[0] # This should always work
             print("Dataset bundeled with model: self.adj.shape", self.adj.shape)
         else:
             print(self.args.bmname + " not found!")
@@ -2011,6 +2016,8 @@ class ExplainerRCExplainer(explain.Explainer):
 
         train_data = (self.adj[:size], self.feat[:size], self.label[:size], self.num_nodes[:size])
         val_data = (self.adj[size - 100:], self.feat[size - 100:], self.label[size - 100:], self.num_nodes[size - 100:])
+        print("Val data in rceplainer:", len(val_data[0]))
+        print("Val data in rceplainer:", len(val_data[0]))
         rule_dict = extract.extract_rules(self.args.bmname, train_data,
                                           val_data, args,
                                           self.model.state_dict(),
