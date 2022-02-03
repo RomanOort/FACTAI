@@ -388,12 +388,17 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
 
         lr = [group['lr'] for group in optimizer.param_groups][0]
 
-        writer.log({
-            "epoch": epoch,
-            "train_acc": tacc,
-            "val_acc": vacc,
-            "lr": lr,
-        })
+        if writer is not None:
+            writer.log({
+                "epoch": epoch,
+                "train_acc": tacc,
+                "val_acc": vacc,
+                "lr": lr,
+            })
+        else:
+            print("Epoch", epoch)
+            print("train_acc", tacc)
+            print("val_acc", vacc)
 
         scheduler.step()
 
@@ -426,9 +431,10 @@ def train_pyg(args, model, device, train_loader, val_loader, test_loader, writer
 
     tacc = test_acc.item() / len(test_loader)
     print("Test accuracy: {}".format(tacc))
-    writer.log({
-        "test_acc": tacc,
-    })
+    if writer is not None:
+        writer.log({
+            "test_acc": tacc,
+        })
     cg_data = {}
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
 
@@ -2462,7 +2468,7 @@ def benchmark_task_val(args, writer=None, feat="node-label"):
     print(np.argmax(all_vals))
 
 
-def arg_parse():
+def arg_parse(str_to_parse=None):
     parser = argparse.ArgumentParser(description="GraphPool arguments.")
     io_parser = parser.add_mutually_exclusive_group(required=False)
     io_parser.add_argument("--dataset", dest="dataset", help="Input dataset.")
@@ -2659,7 +2665,8 @@ def arg_parse():
         name_suffix="",
         assign_ratio=0.1,
     )
-    return parser.parse_args()
+
+    return parser.parse_args(str_to_parse.split())
 
 
 def main():

@@ -1,7 +1,7 @@
 import argparse
 import utils.parser_utils as parser_utils
     
-def arg_parse():
+def arg_parse(str_to_parse=None):
     parser = argparse.ArgumentParser(description="GNN Explainer arguments.")
     io_parser = parser.add_mutually_exclusive_group(required=False)
     io_parser.add_argument("--dataset", dest="dataset", help="Input dataset.")
@@ -376,4 +376,4 @@ def arg_parse():
         bloss_version=""
     )
 
-    return parser.parse_args()
+    return parser.parse_args(str_to_parse.split())
