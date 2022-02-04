@@ -4,7 +4,7 @@ from explainer_main import main
 import json
 
 
-SEEDS = [0, 1, 3, 5, 8, 10, 15, 42, 69, 101][:2]
+SEEDS = [0, 1, 3, 5, 8, 10, 15, 42, 69, 101]
 SPARSITIES = [0.8, 1.0]
 MODELS = ["rcexp", "rcexp_noldb", "pgexplainer", 'pretrained_RCExplainer']
 
