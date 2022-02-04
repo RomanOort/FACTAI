@@ -4,9 +4,9 @@ from explainer_main import main
 import json
 
 
-SEEDS = [0, 1, 3, 5, 8, 10, 15, 42, 69, 101]
+SEEDS = [0, 1, 3, 5, 8, 10, 15, 42, 69, 101][:2]
 SPARSITIES = [0.8, 1.0]
-MODELS = ["rcexp", "rcexp_noldb", "pgexplainer"]
+MODELS = ["rcexp", "rcexp_noldb", "pgexplainer", 'pretrained_RCExplainer']
 
 
 config = {
@@ -114,6 +114,9 @@ def store_fidelity(train, test, seed: str, file):
 
 
 def get_file_name(model: str, seed: str, sparsity: str, dataset='mutag'):
+    if model == 'pretrained_RCExplainer':
+        return 'saved_models/pretrained_RCExplainer/rcexplainer.pth.tar'
+
     path = f"saved_models/{model}_{dataset}_seed_{seed}_sparsity" \
            f"_{sparsity}_logdir_RIGHT_HYPERPARAMS" \
            f"/{model}_mutagexplainer_Mutagenicity_ep_0_seed_" \

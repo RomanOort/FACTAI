@@ -10,10 +10,7 @@ tqdm
 wandb
 torchvision
 torch
-seaborn
 dill
 seaborn
-torch
-torchvision
-dill
+gdown
 pgmpy==0.1.11
