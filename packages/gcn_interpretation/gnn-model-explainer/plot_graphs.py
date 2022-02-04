@@ -69,7 +69,7 @@ def plot(data, labels, model_name, axes, sp , threshold_sp, type_data, type='sam
 def plot_main(results_folder, type_data, figsize, threshold=0):
     models = os.listdir(results_folder)
     sparsity = [0.8, 1.0]
-    names = {'rcexp': 'RCExplainer', 'pgexplainer': 'PGExplainer', 'rcexp_noldb': 'RCExp-NoLDB', 'pretrained_RCExplainer': 'Pretrained RCExplainer'}
+    names = {'rcexp': 'RCExplainer', 'pgexplainer': 'PGExplainer', 'rcexp_noldb': 'RCExp-NoLDB', 'pretrained_RCExplainer': 'Pretrained RCExplainer', 'pretrained_rcexplainer': 'Pretrained RCExplainer'}
     
     _, (ax1, ax2) = plt.subplots(1,2, figsize=figsize)
 
